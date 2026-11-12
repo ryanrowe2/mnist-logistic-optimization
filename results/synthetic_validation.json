@@ -1,0 +1,92 @@
+{
+  "features": [
+    [
+      3.0,
+      1.0
+    ],
+    [
+      1.0,
+      2.0
+    ],
+    [
+      -1.0,
+      -3.0
+    ],
+    [
+      -3.0,
+      -1.0
+    ],
+    [
+      1.0,
+      -0.25
+    ],
+    [
+      -1.0,
+      0.5
+    ]
+  ],
+  "finite_difference_epsilon": 1e-06,
+  "geometry_comparison": {
+    "coordinate": {
+      "coordinate_updates": [
+        250,
+        0
+      ],
+      "final_objective": 0.1453028264484368,
+      "final_weights": [
+        1.4460904358980766,
+        0.0
+      ],
+      "initial_objective": 0.6931471805599453,
+      "iterations": 250,
+      "loss_decreased": true,
+      "step_size": 0.02
+    },
+    "gd": {
+      "coordinate_updates": [
+        0,
+        0
+      ],
+      "final_objective": 0.12690304853384404,
+      "final_weights": [
+        1.2671576316458557,
+        0.5624870161487224
+      ],
+      "initial_objective": 0.6931471805599453,
+      "iterations": 250,
+      "loss_decreased": true,
+      "step_size": 0.02
+    },
+    "linf": {
+      "coordinate_updates": [
+        0,
+        0
+      ],
+      "final_objective": 0.1243137886633266,
+      "final_weights": [
+        1.2684992108077748,
+        0.7806458308941907
+      ],
+      "initial_objective": 0.6931471805599453,
+      "iterations": 250,
+      "loss_decreased": true,
+      "step_size": 0.02
+    }
+  },
+  "initial_weights": [
+    0.0,
+    0.0
+  ],
+  "labels": [
+    1,
+    1,
+    -1,
+    -1,
+    1,
+    -1
+  ],
+  "max_absolute_gradient_difference": 4.123867913818913e-11,
+  "numpy_version": "2.3.5",
+  "provenance": "synthetic_two_feature_validation_not_mnist",
+  "purpose": "Numerical and directional smoke validation, NOT classification accuracy evidence"
+}

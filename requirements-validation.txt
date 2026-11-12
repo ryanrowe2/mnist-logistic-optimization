@@ -1,0 +1,6 @@
+# Observed top-level validation versions on Python 3.13.5 (not a full transitive lock)
+numpy==2.3.5
+matplotlib==3.10.8
+scikit-learn==1.8.0
+pytest==9.0.2
+pytest-cov==7.0.0

@@ -1,0 +1,37 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.venv/
+build/
+dist/
+*.npz
+*.npy
+*.arff
+*.gz
+*.csv
+.DS_Store
+results/**/metrics.json
+results/**/figures/
+figures/generated/
+
+# Generated experiment outputs: track only curated synthetic evidence
+results/optimizer_comparison/
+results/train_only_tuning/
+results/historical_*/
+results/official_*/
+results/latest/
+results/**/comparison.json
+results/**/comparison.png
+results/**/selection.json
+results/**/validation_steps.png
+results/**/_SUCCESS.json
+*.whl
+
+# All experimental outputs except reviewed synthetic evidence
+results/*
+!results/synthetic_validation.json
+real_mnist_validation/
