@@ -121,7 +121,6 @@ def test_n03_reject_conflicting_wheel_variant_dependencies(tmp_path):
     assert not (tmp_path / "lock.txt").exists()
 
 
-
 def test_n03_nested_vendored_metadata_is_not_a_second_distribution(tmp_path):
     root, store = project(tmp_path / "proj", ["fake-core>=1"]), tmp_path / "wheels"
     wheel(
