@@ -1,4 +1,36 @@
-# Current release — v1.15.0
+# Current release — v1.15.1
+
+Targeted hosted-certification repair of the preserved v1.15.0 publication
+(commit `f6b22f0bb40f8b2c10824c9c654644185a215270`).
+
+- Ruff lint and canonical formatting pass with Ruff 0.17.5; both are enforced in CI.
+- Local Python 3.12 regression run: **294 passed, one network test deselected,
+  86.06% combined package/script coverage**, above the 80% threshold.
+- MNIST/development extras and validation requirements include pandas.
+- The OpenML loader explicitly selects scikit-learn's bundled liac-arff parser.
+- Wheel validation accepts canonical empty directory records while preserving
+  traversal, symlink, tag, RECORD, dependency and streaming-size checks.
+- CI retains test reports, coverage, wheels, release ZIPs, genuine experiment
+  outputs and the acquired wheelhouse with its hash lock for 30 days.
+
+Hosted Python 3.10/3.12/3.13 jobs each passed 294 tests, with 86.37%/86.06%/86.06%
+combined coverage. Ruff lint/formatting, release ZIP build/verification,
+distribution wheels and installed CLIs passed. Genuine OpenML smoke passed;
+the authentic Python 3.13/Linux wheelhouse passed validation, hash-locked offline
+installation and package imports. Its 27 wheels match the SHA-256 hashes in
+[`reference-py313-linux-hashed.txt`](../locks/reference-py313-linux-hashed.txt).
+
+[Full certification workflow and experiment artifacts](https://github.com/ryanrowe2/mnist-logistic-optimization/actions/runs/43321505201)
+record the 10,000-update historical and 2,000-update official-split executions.
+The generated `full_real_mnist_summary.json`, numeric predictions, metrics,
+figures and completion inventories are the measurement record. The delivered
+closure report records their independently checked values and final run outcome.
+[PR #1](https://github.com/ryanrowe2/mnist-logistic-optimization/pull/1) preserves
+the complete targeted repair and final protected CI evidence. The original 2024 rounded 96% result remains historical evidence.
+
+---
+
+# Historical release — v1.15.0
 
 This release addresses the ten findings in the comprehensive v1.14.0
 whole-repository audit, with adversarial numerical and wheel-lock tests.
