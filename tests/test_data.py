@@ -33,9 +33,12 @@ def test_official_protocol_uses_official_partition_and_intercept(fixture_mnist):
     assert np.all(a.X_train[:, -1] == 1)
     assert np.max(a.X_train[:, :-1]) <= 1.0
     assert len(set(a.train_indices).intersection(a.test_indices)) == 0
-    assert not np.array_equal(a.train_indices, prepare_binary(
-        X, y, pair=(4, 9), protocol="official", train_per_class=15, test_per_class=8, seed=43
-    ).train_indices)
+    assert not np.array_equal(
+        a.train_indices,
+        prepare_binary(
+            X, y, pair=(4, 9), protocol="official", train_per_class=15, test_per_class=8, seed=43
+        ).train_indices,
+    )
 
 
 def test_validate_canonical_shape_and_digits(fixture_mnist):
@@ -49,11 +52,19 @@ def test_validate_canonical_shape_and_digits(fixture_mnist):
         validate_mnist(X, np.full(70000, 10))
 
 
-@pytest.mark.parametrize("kwargs", [
-    {"pair": (4, 4)}, {"pair": (-1, 9)}, {"pair": (4, 10)},
-    {"protocol": "wrong"}, {"train_per_class": 0}, {"test_per_class": -1},
-    {"seed": -1}, {"train_per_class": 9000},
-])
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"pair": (4, 4)},
+        {"pair": (-1, 9)},
+        {"pair": (4, 10)},
+        {"protocol": "wrong"},
+        {"train_per_class": 0},
+        {"test_per_class": -1},
+        {"seed": -1},
+        {"train_per_class": 9000},
+    ],
+)
 def test_invalid_sampling_requests(fixture_mnist, kwargs):
     with pytest.raises(ValueError):
         prepare_binary(*fixture_mnist, **kwargs)

@@ -2,9 +2,11 @@
 
 Synthetic arrays test contracts only; they are not MNIST results.
 """
+
 from __future__ import annotations
 
 import json
+
 import numpy as np
 import pytest
 
@@ -17,27 +19,38 @@ from mnist_optimization.provenance import OPENML_LOADER_SOURCE, hash_arrays
 
 def small_split() -> BinarySplit:
     return BinarySplit(
-        X_train=np.array([[2., 1.], [1., 0.], [-2., 1.], [-1., 0.]]),
+        X_train=np.array([[2.0, 1.0], [1.0, 0.0], [-2.0, 1.0], [-1.0, 0.0]]),
         y_train=np.array([1, 1, -1, -1]),
-        X_test=np.array([[1.5, 1.], [-1.5, 1.]]),
+        X_test=np.array([[1.5, 1.0], [-1.5, 1.0]]),
         y_test=np.array([1, -1]),
-        train_indices=np.arange(4), test_indices=np.arange(4, 6),
-        digit_pair=(4, 9), protocol="historical", scaling="raw_0_255", seed=42,
+        train_indices=np.arange(4),
+        test_indices=np.arange(4, 6),
+        digit_pair=(4, 9),
+        protocol="historical",
+        scaling="raw_0_255",
+        seed=42,
         bias_index=None,
     )
 
 
-@pytest.mark.parametrize("parameters", [
-    {"step_size": np.int64(1)},
-    {"step_size": np.uint32(1)},
-    {"step_size": np.int32(1)},
-    {"l2": np.int32(0)},
-    {"l2": np.uint64(1)},
-])
+@pytest.mark.parametrize(
+    "parameters",
+    [
+        {"step_size": np.int64(1)},
+        {"step_size": np.uint32(1)},
+        {"step_size": np.int32(1)},
+        {"l2": np.int32(0)},
+        {"l2": np.uint64(1)},
+    ],
+)
 def test_supported_numpy_integer_configuration_roundtrips_to_json(tmp_path, parameters):
     config = Configuration(
-        train_per_class=2, test_per_class=1, seed=42, iterations=2,
-        record_every=1, **parameters,
+        train_per_class=2,
+        test_per_class=1,
+        seed=42,
+        iterations=2,
+        record_every=1,
+        **parameters,
     )
     assert type(config.step_size) is float
     assert type(config.l2) is float
@@ -51,8 +64,7 @@ def test_supported_numpy_integer_configuration_roundtrips_to_json(tmp_path, para
 
 
 def test_numpy_integer_outside_float64_exact_range_rejected(tmp_path):
-    config = Configuration(step_size=np.uint64(2**53 + 1), iterations=1,
-                           train_per_class=2, test_per_class=1, seed=42)
+    config = Configuration(step_size=np.uint64(2**53 + 1), iterations=1, train_per_class=2, test_per_class=1, seed=42)
     with pytest.raises(ValueError, match="exactly"):
         run_prepared(small_split(), config, output=tmp_path / "forbidden")
     assert not (tmp_path / "forbidden").exists()
@@ -63,11 +75,9 @@ def test_low_level_runner_cannot_issue_openml_observation_or_fake_digest(tmp_pat
     with pytest.raises(ValueError, match="reserved"):
         _execute(small_split(), config, output=tmp_path / "openml", source=OPENML_LOADER_SOURCE)
     with pytest.raises(TypeError, match="dataset_sha256"):
-        _execute(small_split(), config, output=tmp_path / "hash", source="synthetic",
-                 dataset_sha256="f" * 64)
+        _execute(small_split(), config, output=tmp_path / "hash", source="synthetic", dataset_sha256="f" * 64)
     with pytest.raises(TypeError, match="selection_validated"):
-        _execute(small_split(), config, output=tmp_path / "flag", source="synthetic",
-                 selection_validated=True)
+        _execute(small_split(), config, output=tmp_path / "flag", source="synthetic", selection_validated=True)
     assert list(tmp_path.iterdir()) == []
 
 
@@ -75,8 +85,7 @@ def test_private_runner_cannot_claim_full_dataset_for_unrelated_split(fixture_mn
     config = Configuration(train_per_class=2, test_per_class=1, seed=42, iterations=1)
     target = tmp_path / "forged"
     with pytest.raises(ValueError, match="supplied full dataset"):
-        _execute(small_split(), config, output=target, source="synthetic",
-                 full_dataset=fixture_mnist)
+        _execute(small_split(), config, output=target, source="synthetic", full_dataset=fixture_mnist)
     assert not target.exists()
 
 
@@ -102,8 +111,7 @@ def test_wilson_numpy_float_confidence_returns_finite_json_scalars(confidence):
     json.dumps(result, allow_nan=False)
 
 
-@pytest.mark.parametrize("bad", [np.bool_(True), np.float32(np.nan), np.float32(1),
-                                  np.float16(0), np.complex64(0.95)])
+@pytest.mark.parametrize("bad", [np.bool_(True), np.float32(np.nan), np.float32(1), np.float16(0), np.complex64(0.95)])
 def test_wilson_numpy_invalid_confidence_is_rejected(bad):
     with pytest.raises(ValueError, match="confidence"):
         wilson_interval(5, 10, confidence=bad)

@@ -24,13 +24,23 @@ def tiny_split():
 
     X = np.array([[2.0, 1.0], [1.0, 0.0], [-2.0, 1.0], [-1.0, 0.0]])
     T = np.array([[1.5, 0.0], [-1.5, 0.0]])
-    return BinarySplit(X, np.array([1, 1, -1, -1]), T, np.array([1, -1]),
-                       np.arange(4), np.arange(4, 6), (4, 9), "historical", "raw_0_255", 42, None)
+    return BinarySplit(
+        X,
+        np.array([1, 1, -1, -1]),
+        T,
+        np.array([1, -1]),
+        np.arange(4),
+        np.arange(4, 6),
+        (4, 9),
+        "historical",
+        "raw_0_255",
+        42,
+        None,
+    )
 
 
 def tiny_config(**kwargs):
-    return Configuration(train_per_class=2, test_per_class=1, seed=42,
-                         iterations=3, record_every=1, **kwargs)
+    return Configuration(train_per_class=2, test_per_class=1, seed=42, iterations=3, record_every=1, **kwargs)
 
 
 def load_comparison_script():
@@ -50,8 +60,12 @@ def test_reserved_openml_label_cannot_certify_prepared_synthetic(tmp_path):
 
 def test_reserved_openml_label_cannot_certify_supplied_npz_shape_data(fixture_mnist, tmp_path):
     with pytest.raises(ValueError, match="reserved"):
-        run_dataset(*fixture_mnist, Configuration(train_per_class=2, test_per_class=1, iterations=1),
-                    output=tmp_path / "report", source=OPENML_LOADER_SOURCE)
+        run_dataset(
+            *fixture_mnist,
+            Configuration(train_per_class=2, test_per_class=1, iterations=1),
+            output=tmp_path / "report",
+            source=OPENML_LOADER_SOURCE,
+        )
     assert not (tmp_path / "report").exists()
 
 
@@ -177,10 +191,13 @@ def test_compare_failure_rolls_back(monkeypatch, fixture_mnist, tmp_path):
     monkeypatch.setattr(module, "run_dataset", crash_at_second)
     output = tmp_path / "failed_comparison"
     with pytest.raises(RuntimeError, match="second"):
-        module.compare(*fixture_mnist,
-                       config=Configuration(train_per_class=2, test_per_class=2, iterations=2),
-                       step_sizes={"gd": 1e-4, "linf": 1e-8, "coordinate": 1e-4},
-                       output=output, source="synthetic")
+        module.compare(
+            *fixture_mnist,
+            config=Configuration(train_per_class=2, test_per_class=2, iterations=2),
+            step_sizes={"gd": 1e-4, "linf": 1e-8, "coordinate": 1e-4},
+            output=output,
+            source="synthetic",
+        )
     assert not output.exists()
 
 
@@ -199,9 +216,13 @@ def test_stratified_selection_deterministic_and_disjoint():
 def test_train_only_tuning_results_are_real_and_separate(fixture_mnist, tmp_path):
     grid = {"gd": [1e-4, 5e-5], "linf": [1e-8], "coordinate": [1e-4]}
     output = tmp_path / "tuning"
-    report = tune_and_evaluate(*fixture_mnist,
-                               config=Configuration(train_per_class=8, test_per_class=3, iterations=3),
-                               step_grids=grid, output=output, source="fixture")
+    report = tune_and_evaluate(
+        *fixture_mnist,
+        config=Configuration(train_per_class=8, test_per_class=3, iterations=3),
+        step_grids=grid,
+        output=output,
+        source="fixture",
+    )
     assert report["selection_training_n"] + report["validation_n"] == 16
     assert report["test_n"] == 6
     assert set(report["final_refit_and_test_once_per_method"]) == set(grid)
@@ -214,9 +235,14 @@ def test_train_only_tuning_results_are_real_and_separate(fixture_mnist, tmp_path
 
 def test_tuning_rejects_invalid_grid_before_preparation(tmp_path):
     with pytest.raises(ValueError, match="grid"):
-        tune_and_evaluate(np.array([]), np.array([]), config=Configuration(),
-                          step_grids={"gd": [0], "linf": [0.1], "coordinate": [0.1]},
-                          output=tmp_path / "no", source="synthetic")
+        tune_and_evaluate(
+            np.array([]),
+            np.array([]),
+            config=Configuration(),
+            step_grids={"gd": [0], "linf": [0.1], "coordinate": [0.1]},
+            output=tmp_path / "no",
+            source="synthetic",
+        )
     assert not (tmp_path / "no").exists()
 
 
@@ -226,11 +252,10 @@ def test_train_only_selection_is_invariant_to_test_pixel_changes(fixture_mnist, 
     altered = X.copy()
     altered[60000:] = 255 - altered[60000:]
     grid = {"gd": [0.05, 0.1], "linf": [0.001], "coordinate": [0.5]}
-    config = Configuration(protocol="official", train_per_class=6, test_per_class=3,
-                           iterations=2, step_size=0.1)
-    old = tune_and_evaluate(X, y, config=config, step_grids=grid,
-                            output=tmp_path / "original", source="synthetic")
-    new = tune_and_evaluate(altered, y, config=config, step_grids=grid,
-                            output=tmp_path / "changed_test", source="synthetic")
+    config = Configuration(protocol="official", train_per_class=6, test_per_class=3, iterations=2, step_size=0.1)
+    old = tune_and_evaluate(X, y, config=config, step_grids=grid, output=tmp_path / "original", source="synthetic")
+    new = tune_and_evaluate(
+        altered, y, config=config, step_grids=grid, output=tmp_path / "changed_test", source="synthetic"
+    )
     assert old["selection"] == new["selection"]
     assert old["dataset_sha256"] != new["dataset_sha256"]

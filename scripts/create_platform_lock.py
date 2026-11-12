@@ -3,6 +3,7 @@
 Install the generated lock in a NEW environment with --no-index, --require-hashes
 and --find-links; lock creation alone never certifies an installation.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -55,8 +56,11 @@ def required_packages(root: Path) -> list[Requirement]:
     items.extend(project.get("optional-dependencies", {}).get("dev", []))
     validation = root / "requirements-validation.txt"
     if validation.exists():
-        items.extend(line.strip() for line in validation.read_text(encoding="utf-8").splitlines()
-                     if line.strip() and not line.lstrip().startswith("#"))
+        items.extend(
+            line.strip()
+            for line in validation.read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.lstrip().startswith("#")
+        )
     items.extend(("wheel", "packaging", "ruff>=0.8,<1"))
     return [Requirement(item) for item in items]
 
@@ -103,17 +107,22 @@ def _read_wheel(path: Path, supported_tags: set) -> tuple[str, Version, list[Req
                         is_directory = member.is_dir()
                         parts = entry[:-1].split("/") if is_directory else entry.split("/")
                         kind = stat.S_IFMT(member.external_attr >> 16)
-                        if (not entry or entry.startswith("/") or "\\" in entry
-                                or any(part in ("", ".", "..") for part in parts)
-                                or len(entry) > 1024 or kind == stat.S_IFLNK
-                                or (is_directory and (member.file_size != 0
-                                                      or kind not in (0, stat.S_IFDIR)))
-                                or (not is_directory and kind == stat.S_IFDIR)):
+                        if (
+                            not entry
+                            or entry.startswith("/")
+                            or "\\" in entry
+                            or any(part in ("", ".", "..") for part in parts)
+                            or len(entry) > 1024
+                            or kind == stat.S_IFLNK
+                            or (is_directory and (member.file_size != 0 or kind not in (0, stat.S_IFDIR)))
+                            or (not is_directory and kind == stat.S_IFDIR)
+                        ):
                             raise ValueError("unsafe or noncanonical wheel path")
                         if is_directory:
                             directory_entries.add(entry)
-                        if (member.file_size > MAX_MEMBER_BYTES
-                                or member.file_size > MAX_RATIO * max(1, member.compress_size)):
+                        if member.file_size > MAX_MEMBER_BYTES or member.file_size > MAX_RATIO * max(
+                            1, member.compress_size
+                        ):
                             raise ValueError("wheel member expansion limit exceeded")
                     candidates = [n for n in names if n.endswith(".dist-info/METADATA")]
                     if len(candidates) != 1:
@@ -122,15 +131,20 @@ def _read_wheel(path: Path, supported_tags: set) -> tuple[str, Version, list[Req
                     if f"{distdir}/WHEEL" not in names or f"{distdir}/RECORD" not in names:
                         raise ValueError("wheel lacks WHEEL or RECORD metadata")
                     metadata = BytesParser().parsebytes(_wheel_member_bytes(archive, archive.getinfo(candidates[0])))
-                    if (canonicalize_name(metadata.get("Name", "")) != name
-                            or metadata.get("Version") is None or Version(metadata["Version"]) != version):
+                    if (
+                        canonicalize_name(metadata.get("Name", "")) != name
+                        or metadata.get("Version") is None
+                        or Version(metadata["Version"]) != version
+                    ):
                         raise ValueError("wheel filename disagrees with METADATA name/version")
                     python_constraint = metadata.get("Requires-Python")
                     if python_constraint and not SpecifierSet(python_constraint).contains(
-                            f"{sys.version_info.major}.{sys.version_info.minor}"):
+                        f"{sys.version_info.major}.{sys.version_info.minor}"
+                    ):
                         raise ValueError("wheel Requires-Python excludes this interpreter")
                     wheel_headers = BytesParser().parsebytes(
-                        _wheel_member_bytes(archive, archive.getinfo(f"{distdir}/WHEEL")))
+                        _wheel_member_bytes(archive, archive.getinfo(f"{distdir}/WHEEL"))
+                    )
                     if not wheel_headers.get("Wheel-Version", "").startswith("1."):
                         raise ValueError("unsupported wheel format")
                     inside_tags = set()
@@ -210,8 +224,7 @@ def create_lock(wheelhouse: Path, output: Path, *, project_root: Path = ROOT) ->
     def require(req: Requirement, *, origin: str, selected_extras: set[str]) -> None:
         # Marker environment is evaluated once for the base dependency and
         # for each explicitly requested extra of the depending distribution.
-        if req.marker and not any(req.marker.evaluate({"extra": extra})
-                                  for extra in (selected_extras | {""})):
+        if req.marker and not any(req.marker.evaluate({"extra": extra}) for extra in (selected_extras | {""})):
             return
         name = canonicalize_name(req.name)
         if name not in versions:
@@ -221,7 +234,7 @@ def create_lock(wheelhouse: Path, output: Path, *, project_root: Path = ROOT) ->
         new_extras = set(req.extras) - active[name]
         active[name].update(req.extras)
         # The empty extra represents dependencies installed unconditionally.
-        for extra in ({""} | new_extras):
+        for extra in {""} | new_extras:
             if (name, extra) in processed:
                 continue
             processed.add((name, extra))
@@ -236,11 +249,14 @@ def create_lock(wheelhouse: Path, output: Path, *, project_root: Path = ROOT) ->
         if (name, "") not in processed:
             require(Requirement(name), origin="wheelhouse", selected_extras=set())
 
-    rows = [f"{name}=={version} " + " ".join(f"--hash=sha256:{h}" for h in sorted(digests))
-            for (name, version), digests in sorted(grouped.items())]
-    payload = ("# Complete platform-specific wheelhouse inventory; not certified until a fresh\n"
-               "# --no-index --require-hashes installation and import smoke test pass.\n"
-               + "\n".join(rows) + "\n").encode("utf-8")
+    rows = [
+        f"{name}=={version} " + " ".join(f"--hash=sha256:{h}" for h in sorted(digests))
+        for (name, version), digests in sorted(grouped.items())
+    ]
+    payload = (
+        "# Complete platform-specific wheelhouse inventory; not certified until a fresh\n"
+        "# --no-index --require-hashes installation and import smoke test pass.\n" + "\n".join(rows) + "\n"
+    ).encode("utf-8")
     guard_path(output.parent)
     output.parent.mkdir(parents=True, exist_ok=True)
     guard_path(output)

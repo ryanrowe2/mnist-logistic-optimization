@@ -1,4 +1,5 @@
 """Adversarial regressions for the v1.3.0 fresh audit (F01-F09, E05)."""
+
 from __future__ import annotations
 
 import importlib.util
@@ -17,7 +18,9 @@ from mnist_optimization.artifacts import validate_inventory
 from mnist_optimization.experiments import Configuration, run_dataset
 from mnist_optimization.logistic import real_matrix
 from mnist_optimization.provenance import (
-    OPENML_LOADER_SOURCE, code_fingerprint, hash_arrays,
+    OPENML_LOADER_SOURCE,
+    code_fingerprint,
+    hash_arrays,
 )
 from mnist_optimization.tuning import tune_and_evaluate
 
@@ -57,13 +60,21 @@ def test_public_tuning_and_comparison_cannot_claim_loader(fixture_mnist, tmp_pat
     compare = script("compare_optimizers").compare
     config = Configuration(train_per_class=2, test_per_class=2, iterations=1)
     with pytest.raises(ValueError, match="reserved"):
-        compare(*fixture_mnist, config=config,
-                step_sizes={"gd": 0.01, "linf": 1e-7, "coordinate": 0.001},
-                output=tmp_path / "forged_comparison", source=OPENML_LOADER_SOURCE)
+        compare(
+            *fixture_mnist,
+            config=config,
+            step_sizes={"gd": 0.01, "linf": 1e-7, "coordinate": 0.001},
+            output=tmp_path / "forged_comparison",
+            source=OPENML_LOADER_SOURCE,
+        )
     with pytest.raises(ValueError, match="reserved"):
-        tune_and_evaluate(*fixture_mnist, config=config,
-                          step_grids={"gd": [0.01], "linf": [1e-7], "coordinate": [0.001]},
-                          output=tmp_path / "forged_tuning", source=OPENML_LOADER_SOURCE)
+        tune_and_evaluate(
+            *fixture_mnist,
+            config=config,
+            step_grids={"gd": [0.01], "linf": [1e-7], "coordinate": [0.001]},
+            output=tmp_path / "forged_tuning",
+            source=OPENML_LOADER_SOURCE,
+        )
     for name in ("forged_comparison", "forged_tuning"):
         assert not (tmp_path / name).exists()
 
@@ -114,15 +125,14 @@ def test_release_allowlist_excludes_untracked_secrets_and_unknown_python(tmp_pat
 
 def test_script_changes_affect_source_fingerprint(tmp_path, monkeypatch):
     import mnist_optimization.provenance as p
+
     project = tmp_path / "project"
     package = project / "src" / "mnist_optimization"
     scripts = project / "scripts"
     package.mkdir(parents=True)
     scripts.mkdir()
     (package / "core.py").write_text("x=1", encoding="utf-8")
-    (project / "pyproject.toml").write_text(
-        '[project]\nname = "mnist-logistic-optimization"\n', encoding="utf-8"
-    )
+    (project / "pyproject.toml").write_text('[project]\nname = "mnist-logistic-optimization"\n', encoding="utf-8")
     script_file = scripts / "run.py"
     script_file.write_text("print(1)", encoding="utf-8")
     monkeypatch.setattr(p, "__file__", str(package / "provenance.py"))
@@ -171,10 +181,40 @@ def test_standalone_scripts_end_to_end_on_synthetic_npz(tmp_path, fixture_mnist)
     args = [
         ("reproduce_original.py", ["--train-per-class", "2", "--test-per-class", "2", "--iterations", "2"]),
         ("run_experiments.py", ["--train-per-class", "2", "--test-per-class", "2", "--iterations", "2"]),
-        ("compare_optimizers.py", ["--train-per-class", "2", "--test-per-class", "2", "--iterations", "2",
-                                   "--gd-step", "0.0001", "--linf-step", "0.00000001", "--coordinate-step", "0.0001"]),
-        ("tune_optimizers.py", ["--train-per-class", "4", "--test-per-class", "2", "--iterations", "2",
-                                "--gd-grid", "0.1", "--linf-grid", "0.0001", "--coordinate-grid", "0.5"]),
+        (
+            "compare_optimizers.py",
+            [
+                "--train-per-class",
+                "2",
+                "--test-per-class",
+                "2",
+                "--iterations",
+                "2",
+                "--gd-step",
+                "0.0001",
+                "--linf-step",
+                "0.00000001",
+                "--coordinate-step",
+                "0.0001",
+            ],
+        ),
+        (
+            "tune_optimizers.py",
+            [
+                "--train-per-class",
+                "4",
+                "--test-per-class",
+                "2",
+                "--iterations",
+                "2",
+                "--gd-grid",
+                "0.1",
+                "--linf-grid",
+                "0.0001",
+                "--coordinate-grid",
+                "0.5",
+            ],
+        ),
     ]
     env = dict(
         os.environ,
@@ -185,8 +225,15 @@ def test_standalone_scripts_end_to_end_on_synthetic_npz(tmp_path, fixture_mnist)
     )
     for i, (name, flags) in enumerate(args):
         output = tmp_path / f"output_{i}"
-        command = [sys.executable, str(ROOT / "scripts" / name), "--local-npz", str(path),
-                   "--output", str(output), *flags]
+        command = [
+            sys.executable,
+            str(ROOT / "scripts" / name),
+            "--local-npz",
+            str(path),
+            "--output",
+            str(output),
+            *flags,
+        ]
         result = subprocess.run(command, cwd=tmp_path, env=env, capture_output=True, text=True, timeout=65)
         assert result.returncode == 0, (name, result.stdout[-1000:], result.stderr[-1500:])
         assert validate_inventory(output)

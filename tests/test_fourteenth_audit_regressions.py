@@ -1,4 +1,5 @@
 """Adversarial numerical, artifact-safety and lock-completeness regressions."""
+
 from __future__ import annotations
 
 import base64
@@ -36,8 +37,11 @@ def fake_wheel(folder: Path, name: str, version: str = "1.0", requires=()):
     dist = f"{name.replace('-', '_')}-{version}.dist-info"
     files = {
         f"{name.replace('-', '_')}/__init__.py": b"version = 'fixture'\n",
-        f"{dist}/METADATA": (f"Metadata-Version: 2.1\nName: {name}\nVersion: {version}\n"
-                              + "".join(f"Requires-Dist: {req}\n" for req in requires) + "\n").encode(),
+        f"{dist}/METADATA": (
+            f"Metadata-Version: 2.1\nName: {name}\nVersion: {version}\n"
+            + "".join(f"Requires-Dist: {req}\n" for req in requires)
+            + "\n"
+        ).encode(),
         f"{dist}/WHEEL": b"Wheel-Version: 1.0\nGenerator: test\nRoot-Is-Purelib: true\nTag: py3-none-any\n",
     }
     rows = []
@@ -57,21 +61,20 @@ def fake_wheel(folder: Path, name: str, version: str = "1.0", requires=()):
 def minimal_project(tmp_path):
     root = tmp_path / "source"
     root.mkdir()
-    (root / "pyproject.toml").write_text('''[project]
+    (root / "pyproject.toml").write_text("""[project]
 name = "fixture-model"
 version = "0.1"
 dependencies = ["fake-core>=1"]
 [project.optional-dependencies]
 dev = []
-''')
+""")
     (root / "requirements-validation.txt").write_text("")
     return root
 
 
 def complete_fake_wheelhouse(tmp_path):
     wheelhouse = tmp_path / "wheels"
-    for name, version in (("fake-core", "1.2.3"), ("packaging", "25.0"),
-                          ("wheel", "0.45.1"), ("ruff", "0.8.0")):
+    for name, version in (("fake-core", "1.2.3"), ("packaging", "25.0"), ("wheel", "0.45.1"), ("ruff", "0.8.0")):
         fake_wheel(wheelhouse, name, version)
     return wheelhouse
 
@@ -79,9 +82,19 @@ def complete_fake_wheelhouse(tmp_path):
 def test_a01_list_digit_pair_matches_canonical_split():
     config = Configuration(digits=[4, 9], train_per_class=1, test_per_class=1)
     assert config.digits == (4, 9)
-    split = BinarySplit(np.zeros((2, 2)), np.array([-1, 1]), np.zeros((2, 2)),
-                        np.array([-1, 1]), np.array([3, 4]), np.array([5, 6]),
-                        (4, 9), "historical", "raw_0_255", 2024, None)
+    split = BinarySplit(
+        np.zeros((2, 2)),
+        np.array([-1, 1]),
+        np.zeros((2, 2)),
+        np.array([-1, 1]),
+        np.array([3, 4]),
+        np.array([5, 6]),
+        (4, 9),
+        "historical",
+        "raw_0_255",
+        2024,
+        None,
+    )
     validate_split(split, config)
 
 
@@ -102,11 +115,11 @@ def test_a04_representable_regularization():
 
 def test_a05_finite_cancelling_products():
     X = np.array([[1e308, 1e308], [1e308, 1e308]])
-    assert np.array_equal(scores(X, [2., -2.]), [0, 0])
-    assert logistic_loss([2., -2.], X, [1, -1]) == pytest.approx(np.log(2))
-    assert np.allclose(logistic_gradient([2., -2.], X, [1, -1]), 0)
+    assert np.array_equal(scores(X, [2.0, -2.0]), [0, 0])
+    assert logistic_loss([2.0, -2.0], X, [1, -1]) == pytest.approx(np.log(2))
+    assert np.allclose(logistic_gradient([2.0, -2.0], X, [1, -1]), 0)
     with pytest.raises(FloatingPointError):
-        scores(X, [2., 2.])
+        scores(X, [2.0, 2.0])
 
 
 def test_a06_lock_output_symlink_rejected_without_touching_canary(tmp_path):
@@ -165,10 +178,26 @@ def test_lock_graph_conflicts_and_installable_fixture(tmp_path):
     project = minimal_project(tmp_path)
     target = lock.create_lock(wheelhouse, tmp_path / "lock.txt", project_root=project)
     assert "fake-core==1.2.3" in target.read_text()
-    install = subprocess.run([sys.executable, "-m", "pip", "install", "--no-index", "--no-deps",
-                              "--require-hashes", "--find-links", str(wheelhouse), "--target",
-                              str(tmp_path / "installed"), "-r", str(target)],
-                             capture_output=True, text=True, timeout=45)
+    install = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "--no-index",
+            "--no-deps",
+            "--require-hashes",
+            "--find-links",
+            str(wheelhouse),
+            "--target",
+            str(tmp_path / "installed"),
+            "-r",
+            str(target),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=45,
+    )
     assert install.returncode == 0, install.stderr
     fake_wheel(wheelhouse, "fake-core", "2.0")
     with pytest.raises(ValueError, match="conflicting"):
@@ -182,13 +211,19 @@ def test_a10_synthetic_outputs_do_not_follow_symlinks(tmp_path, entry):
     (project / "figures").mkdir()
     (project / "results").mkdir()
     (project / "scripts/generate_synthetic_validation.py").write_bytes(
-        (ROOT / "scripts/generate_synthetic_validation.py").read_bytes())
+        (ROOT / "scripts/generate_synthetic_validation.py").read_bytes()
+    )
     canary = tmp_path / "canary.txt"
     canary.write_text("PRESERVE")
     (project / entry).symlink_to(canary)
     env = dict(os.environ, PYTHONPATH=str(ROOT / "src"), OPENBLAS_NUM_THREADS="1", MPLBACKEND="Agg")
-    proc = subprocess.run([sys.executable, str(project / "scripts/generate_synthetic_validation.py")],
-                          env=env, capture_output=True, text=True, timeout=30)
+    proc = subprocess.run(
+        [sys.executable, str(project / "scripts/generate_synthetic_validation.py")],
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
     assert proc.returncode != 0
     assert "symlink" in proc.stderr
     assert canary.read_text() == "PRESERVE"

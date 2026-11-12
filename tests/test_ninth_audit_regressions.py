@@ -1,4 +1,5 @@
 """Independent regressions for v1.9 provenance and stationary-coordinate defects."""
+
 from __future__ import annotations
 
 import importlib.util
@@ -10,7 +11,6 @@ import numpy as np
 import pytest
 
 from mnist_optimization.optimizers import descent_direction, optimize
-
 
 SOURCE = Path(__file__).resolve().parents[1]
 PACKAGE = SOURCE / "src" / "mnist_optimization"
@@ -58,8 +58,7 @@ def checkout_style_module(parent: Path):
 
 
 def git(*args, cwd: Path):
-    return subprocess.run(["git", *args], cwd=cwd, check=True, text=True,
-                          capture_output=True).stdout.strip()
+    return subprocess.run(["git", *args], cwd=cwd, check=True, text=True, capture_output=True).stdout.strip()
 
 
 @pytest.mark.skipif(shutil.which("git") is None, reason="git executable unavailable")
@@ -99,8 +98,9 @@ def test_stationary_coordinate_gradient_does_not_claim_updates():
     direction, index = descent_direction(np.zeros(2), "coordinate")
     assert index is None
     np.testing.assert_array_equal(direction, [0.0, 0.0])
-    result = optimize(np.zeros((4, 2)), [-1, 1, -1, 1], method="coordinate",
-                      iterations=7, record_every=1, step_size=0.1)
+    result = optimize(
+        np.zeros((4, 2)), [-1, 1, -1, 1], method="coordinate", iterations=7, record_every=1, step_size=0.1
+    )
     assert result.update_counts.tolist() == [0, 0]
     assert result.selection_counts.tolist() == [0, 0]
     np.testing.assert_array_equal(result.weights, [0, 0])
@@ -108,16 +108,22 @@ def test_stationary_coordinate_gradient_does_not_claim_updates():
 
 
 def test_rounded_noop_step_counts_selection_but_not_effective_update():
-    result = optimize(np.ones((4, 1)), -np.ones(4), method="coordinate", iterations=5,
-                      initial_weights=np.array([1e16]), step_size=0.1, record_every=1)
+    result = optimize(
+        np.ones((4, 1)),
+        -np.ones(4),
+        method="coordinate",
+        iterations=5,
+        initial_weights=np.array([1e16]),
+        step_size=0.1,
+        record_every=1,
+    )
     assert result.selection_counts.tolist() == [5]
     assert result.update_counts.tolist() == [0]
     np.testing.assert_array_equal(result.weights, [1e16])
 
 
 def test_nonzero_coordinate_steps_count_both_selection_and_update():
-    result = optimize(np.ones((4, 1)), -np.ones(4), method="coordinate", iterations=5,
-                      step_size=0.1, record_every=1)
+    result = optimize(np.ones((4, 1)), -np.ones(4), method="coordinate", iterations=5, step_size=0.1, record_every=1)
     assert result.selection_counts.tolist() == [5]
     assert result.update_counts.tolist() == [5]
 
@@ -132,11 +138,21 @@ def test_stationary_coordinate_counts_are_truthful_in_saved_artifacts(tmp_path):
     X = np.zeros((4, 784), dtype=float)
     y = np.array([-1, -1, 1, 1])
     split = BinarySplit(
-        X, y, X.copy(), y.copy(), np.arange(4), np.arange(4, 8),
-        (4, 9), "historical", "raw_0_255", 42, None,
+        X,
+        y,
+        X.copy(),
+        y.copy(),
+        np.arange(4),
+        np.arange(4, 8),
+        (4, 9),
+        "historical",
+        "raw_0_255",
+        42,
+        None,
     )
-    config = Configuration(train_per_class=2, test_per_class=2, seed=42,
-                           method="coordinate", iterations=7, step_size=0.1)
+    config = Configuration(
+        train_per_class=2, test_per_class=2, seed=42, method="coordinate", iterations=7, step_size=0.1
+    )
     report = run_prepared(split, config, output=tmp_path / "stationary", source="synthetic_test_fixture")
     assert report["optimization"]["coordinate_selection_total"] == 0
     assert report["optimization"]["coordinate_update_total"] == 0

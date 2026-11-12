@@ -33,13 +33,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output", type=Path, default=Path("results/train_only_tuning"))
     options = parser.parse_args(argv)
     config = Configuration(
-        protocol=options.protocol, digits=tuple(options.digits),
-        train_per_class=options.train_per_class, test_per_class=options.test_per_class,
-        iterations=options.iterations, record_every=options.record_every,
-        seed=options.seed, l2=options.l2,
+        protocol=options.protocol,
+        digits=tuple(options.digits),
+        train_per_class=options.train_per_class,
+        test_per_class=options.test_per_class,
+        iterations=options.iterations,
+        record_every=options.record_every,
+        seed=options.seed,
+        l2=options.l2,
     )
     steps = {
-        "gd": options.gd_grid, "linf": options.linf_grid,
+        "gd": options.gd_grid,
+        "linf": options.linf_grid,
         "coordinate": options.coordinate_grid,
     }
     validate_configuration(config)
@@ -57,15 +62,25 @@ def main(argv: list[str] | None = None) -> int:
         source = "user_supplied_unverified_npz"
         observation = "local_npz_loaded_by_cli_unverified"
     report = tune_and_evaluate(
-        X, y, config=config, step_grids=steps, output=options.output,
-        source=source, validation_fraction=options.validation_fraction,
+        X,
+        y,
+        config=config,
+        step_grids=steps,
+        output=options.output,
+        source=source,
+        validation_fraction=options.validation_fraction,
     )
     # Only this command-line function can report what it actually invoked.
     # Do not pass this observation into a public array-processing function.
-    print(json.dumps({
-        "cli_only_acquisition_observation": observation,
-        "final_refit_and_test_once_per_method": report["final_refit_and_test_once_per_method"],
-    }, indent=2))
+    print(
+        json.dumps(
+            {
+                "cli_only_acquisition_observation": observation,
+                "final_refit_and_test_once_per_method": report["final_refit_and_test_once_per_method"],
+            },
+            indent=2,
+        )
+    )
     return 0
 
 

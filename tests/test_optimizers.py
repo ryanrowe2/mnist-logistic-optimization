@@ -53,11 +53,18 @@ def test_repeated_runs_bitwise_reproducible():
     assert a.iterations[-1] == 50
 
 
-@pytest.mark.parametrize("kwargs", [
-    {"iterations": 0}, {"iterations": 1.5}, {"step_size": 0}, {"step_size": np.inf},
-    {"record_every": 0}, {"method": "not_real"},
-    {"initial_weights": [1, 2, 3]},
-])
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"iterations": 0},
+        {"iterations": 1.5},
+        {"step_size": 0},
+        {"step_size": np.inf},
+        {"record_every": 0},
+        {"method": "not_real"},
+        {"initial_weights": [1, 2, 3]},
+    ],
+)
 def test_bad_optimizer_parameters(kwargs):
     with pytest.raises(ValueError):
         optimize([[1.0, 2.0]], [1], **kwargs)

@@ -23,16 +23,18 @@ OPENML_LOADER_SOURCE = "openml_loader_observed_unverified"
 
 # These are labels of *unverified input classes*, never upstream certificates.
 # Free-form caller descriptions remain separate, explicitly untrusted notes.
-UNVERIFIED_INPUT_LABELS = frozenset({
-    "user_supplied_unverified_prepared_split",
-    "user_supplied_unverified_array",
-    "user_supplied_unverified_npz",
-    "unverified_array_input",
-    "synthetic_test_fixture",
-    "synthetic_fixture",
-    "synthetic",
-    "fixture",
-})
+UNVERIFIED_INPUT_LABELS = frozenset(
+    {
+        "user_supplied_unverified_prepared_split",
+        "user_supplied_unverified_array",
+        "user_supplied_unverified_npz",
+        "unverified_array_input",
+        "synthetic_test_fixture",
+        "synthetic_fixture",
+        "synthetic",
+        "fixture",
+    }
+)
 
 
 def source_label(source: str, *, prepared: bool = False) -> str:
@@ -148,20 +150,29 @@ def environment_fingerprint() -> dict:
     if root is not None:
         try:
             top_level = subprocess.run(
-                ["git", "rev-parse", "--show-toplevel"], cwd=root,
-                capture_output=True, text=True, timeout=3, check=True,
+                ["git", "rev-parse", "--show-toplevel"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+                timeout=3,
+                check=True,
             ).stdout.strip()
             if Path(top_level).resolve() == root.resolve():
                 # The commit must actually contain *all* executed modules and
                 # scripts; a matching project name alone proves nothing.
-                required = sorted([
-                    *(f"src/mnist_optimization/{file.name}" for file in package.glob("*.py")),
-                    *(f"scripts/{file.name}" for file in (root / "scripts").glob("*.py")),
-                    "pyproject.toml",
-                ])
+                required = sorted(
+                    [
+                        *(f"src/mnist_optimization/{file.name}" for file in package.glob("*.py")),
+                        *(f"scripts/{file.name}" for file in (root / "scripts").glob("*.py")),
+                        "pyproject.toml",
+                    ]
+                )
                 tracked = subprocess.run(
                     ["git", "ls-files", "--error-unmatch", "--", *required],
-                    cwd=root, capture_output=True, text=True, timeout=3,
+                    cwd=root,
+                    capture_output=True,
+                    text=True,
+                    timeout=3,
                 )
                 tracked_sources = tracked.returncode == 0
                 if not tracked_sources:
@@ -169,14 +180,22 @@ def environment_fingerprint() -> dict:
                 else:
                     status = subprocess.run(
                         ["git", "status", "--porcelain", "--untracked-files=all", "--", *required],
-                        cwd=root, capture_output=True, text=True, timeout=3, check=True,
+                        cwd=root,
+                        capture_output=True,
+                        text=True,
+                        timeout=3,
+                        check=True,
                     ).stdout
                     if status.strip():
                         git_state = "dirty_source"
                     else:
                         candidate = subprocess.run(
-                            ["git", "rev-parse", "HEAD"], cwd=root,
-                            capture_output=True, text=True, timeout=3, check=True,
+                            ["git", "rev-parse", "HEAD"],
+                            cwd=root,
+                            capture_output=True,
+                            text=True,
+                            timeout=3,
+                            check=True,
                         ).stdout.strip()
                         if len(candidate) in (40, 64) and all(c in "0123456789abcdef" for c in candidate):
                             revision = candidate
@@ -184,16 +203,16 @@ def environment_fingerprint() -> dict:
         except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError):
             git_state = "git_verification_unavailable"
     return {
-        "python": platform.python_version(), "system": platform.system(),
-        "machine": platform.machine(), "numpy": np.__version__,
-        "matplotlib": version("matplotlib"), "scikit_learn": version("scikit-learn"),
+        "python": platform.python_version(),
+        "system": platform.system(),
+        "machine": platform.machine(),
+        "numpy": np.__version__,
+        "matplotlib": version("matplotlib"),
+        "scikit_learn": version("scikit-learn"),
         "git_revision": revision,
         "git_revision_state": git_state,
         "git_executed_sources_tracked": tracked_sources,
         "source_sha256": code_fingerprint(),
-        "source_fingerprint_scope": (
-            "package_scripts_pyproject" if root is not None
-            else "installed_package_only"
-        ),
+        "source_fingerprint_scope": ("package_scripts_pyproject" if root is not None else "installed_package_only"),
         "blas_lapack_config": str(getattr(np.__config__, "CONFIG", {}).get("Build Dependencies", {}))[:1000],
     }

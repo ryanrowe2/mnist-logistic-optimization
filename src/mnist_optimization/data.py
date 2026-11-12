@@ -113,9 +113,12 @@ def prepare_binary(
     # The lower-level public API enforces the same canonical pixel domain
     # as the OpenML loader (including integer-valued pixels and valid digits).
     features, labels = validate_mnist(X, y)
-    if (not isinstance(pair, (tuple, list)) or len(pair) != 2
-            or any(type(d) is not int or d < 0 or d > 9 for d in pair)
-            or pair[0] == pair[1]):
+    if (
+        not isinstance(pair, (tuple, list))
+        or len(pair) != 2
+        or any(type(d) is not int or d < 0 or d > 9 for d in pair)
+        or pair[0] == pair[1]
+    ):
         raise ValueError("pair must contain two distinct digits in 0..9")
     for count in (train_per_class, test_per_class):
         if type(count) is not int or count <= 0:
@@ -132,19 +135,13 @@ def prepare_binary(
     if protocol == "official":
         low_digit, high_digit = sorted(pair)
         training_rngs = {
-            digit: np.random.default_rng(np.random.SeedSequence([seed, 0, digit]))
-            for digit in (low_digit, high_digit)
+            digit: np.random.default_rng(np.random.SeedSequence([seed, 0, digit])) for digit in (low_digit, high_digit)
         }
         evaluation_rngs = {
-            digit: np.random.default_rng(np.random.SeedSequence([seed, 1, digit]))
-            for digit in (low_digit, high_digit)
+            digit: np.random.default_rng(np.random.SeedSequence([seed, 1, digit])) for digit in (low_digit, high_digit)
         }
-        training_shuffle = np.random.default_rng(
-            np.random.SeedSequence([seed, 2, low_digit, high_digit])
-        )
-        evaluation_shuffle = np.random.default_rng(
-            np.random.SeedSequence([seed, 3, low_digit, high_digit])
-        )
+        training_shuffle = np.random.default_rng(np.random.SeedSequence([seed, 2, low_digit, high_digit]))
+        evaluation_shuffle = np.random.default_rng(np.random.SeedSequence([seed, 3, low_digit, high_digit]))
         selection_order = (low_digit, high_digit)
     else:
         selection_order = pair
@@ -184,6 +181,15 @@ def prepare_binary(
         X_test = np.column_stack((X_test, np.ones(len(X_test))))
         bias_index = 784
     return BinarySplit(
-        X_train, y_train, X_test, y_test, train_indices, test_indices,
-        pair, protocol, scaling, seed, bias_index,
+        X_train,
+        y_train,
+        X_test,
+        y_test,
+        train_indices,
+        test_indices,
+        pair,
+        protocol,
+        scaling,
+        seed,
+        bias_index,
     )

@@ -14,8 +14,17 @@ def small_split():
     train = np.array([[2.0, 1.0], [1.0, 0.0], [-2.0, 1.0], [-1.0, 0.0]])
     test = np.array([[1.5, 1.0], [-1.5, 1.0]])
     return BinarySplit(
-        train, np.array([1, 1, -1, -1]), test, np.array([1, -1]),
-        np.arange(4), np.arange(4, 6), (4, 9), "historical", "raw_0_255", 42, None,
+        train,
+        np.array([1, 1, -1, -1]),
+        test,
+        np.array([1, -1]),
+        np.arange(4),
+        np.arange(4, 6),
+        (4, 9),
+        "historical",
+        "raw_0_255",
+        42,
+        None,
     )
 
 
@@ -40,13 +49,21 @@ def test_cli_help_and_invalid_arguments():
     env["PYTHONPATH"] = str(root / "src")
     help_run = subprocess.run(
         [sys.executable, "-m", "mnist_optimization.experiments", "--help"],
-        cwd=root, env=env, capture_output=True, text=True, check=False,
+        cwd=root,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
     )
     assert help_run.returncode == 0
     assert "--protocol" in help_run.stdout
     wrong = subprocess.run(
         [sys.executable, "-m", "mnist_optimization.experiments", "--protocol", "WRONG"],
-        cwd=root, env=env, capture_output=True, text=True, check=False,
+        cwd=root,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
     )
     assert wrong.returncode != 0
 
@@ -58,11 +75,27 @@ def test_local_fullshape_cli_with_synthetic_fixture(fixture_mnist, tmp_path):
     fake = tmp_path / "fixture.npz"
     np.savez_compressed(fake, X=fixture_mnist[0], y=fixture_mnist[1])
     output = tmp_path / "command_results"
-    code = main([
-        "--local-npz", str(fake), "--protocol", "historical", "--digits", "4", "9",
-        "--train-per-class", "5", "--test-per-class", "4", "--iterations", "6",
-        "--record-every", "2", "--output", str(output),
-    ])
+    code = main(
+        [
+            "--local-npz",
+            str(fake),
+            "--protocol",
+            "historical",
+            "--digits",
+            "4",
+            "9",
+            "--train-per-class",
+            "5",
+            "--test-per-class",
+            "4",
+            "--iterations",
+            "6",
+            "--record-every",
+            "2",
+            "--output",
+            str(output),
+        ]
+    )
     assert code == 0
     report = json.loads((output / "metrics.json").read_text())
     assert report["source"] == "user_supplied_unverified_array"
@@ -79,12 +112,26 @@ def test_coordinate_visual_and_update_counts(tmp_path):
     X[:, 0] = [1, 2, -2, -1]
     X[:, 1] = [2, 3, -3, -2]
     split = BinarySplit(
-        X, np.array([1, 1, -1, -1]), X.copy(), np.array([1, 1, -1, -1]),
-        np.arange(4), np.arange(4, 8), (4, 9), "historical", "raw_0_255", 42, None,
+        X,
+        np.array([1, 1, -1, -1]),
+        X.copy(),
+        np.array([1, 1, -1, -1]),
+        np.arange(4),
+        np.arange(4, 8),
+        (4, 9),
+        "historical",
+        "raw_0_255",
+        42,
+        None,
     )
     cfg = Configuration(
-        train_per_class=2, test_per_class=2, seed=42, method="coordinate",
-        iterations=12, record_every=2, step_size=0.01,
+        train_per_class=2,
+        test_per_class=2,
+        seed=42,
+        method="coordinate",
+        iterations=12,
+        record_every=2,
+        step_size=0.01,
     )
     report = run_prepared(split, cfg, output=tmp_path, source="synthetic_test_fixture")
     assert report["optimization"]["coordinate_update_total"] == 12
@@ -109,17 +156,29 @@ def test_run_prepared_rejects_mismatched_metadata(tmp_path):
 
 def test_prepared_duplicate_test_index_rejected(tmp_path):
     import pytest
+
     from mnist_optimization.data import BinarySplit
 
     s = small_split()
     bad = BinarySplit(
-        s.X_train, s.y_train, s.X_test, s.y_test, s.train_indices,
-        np.array([0, 7]), s.digit_pair, s.protocol, s.scaling, s.seed, s.bias_index,
+        s.X_train,
+        s.y_train,
+        s.X_test,
+        s.y_test,
+        s.train_indices,
+        np.array([0, 7]),
+        s.digit_pair,
+        s.protocol,
+        s.scaling,
+        s.seed,
+        s.bias_index,
     )
     with pytest.raises(ValueError, match="disjoint"):
         run_prepared(
-            bad, Configuration(train_per_class=2, test_per_class=1, seed=42, iterations=2),
-            output=tmp_path, source="synthetic",
+            bad,
+            Configuration(train_per_class=2, test_per_class=1, seed=42, iterations=2),
+            output=tmp_path,
+            source="synthetic",
         )
 
 
@@ -129,7 +188,8 @@ def test_no_historical_score_is_created_from_synthetic_fixture(fixture_mnist, tm
     report = run_dataset(
         *fixture_mnist,
         Configuration(train_per_class=4, test_per_class=3, iterations=3),
-        output=tmp_path, source="synthetic_test_fixture",
+        output=tmp_path,
+        source="synthetic_test_fixture",
     )
     assert report["data"]["canonical_mnist_assertion"] is False
     assert report["source"] != "openml_dataset_554_v1"

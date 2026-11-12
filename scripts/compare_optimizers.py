@@ -28,21 +28,31 @@ def validate_steps(steps: dict[str, float]) -> None:
 
 
 def compare(
-    X: np.ndarray, y: np.ndarray, *, config: Configuration,
-    step_sizes: dict[str, float], output: Path, source: str,
+    X: np.ndarray,
+    y: np.ndarray,
+    *,
+    config: Configuration,
+    step_sizes: dict[str, float],
+    output: Path,
+    source: str,
 ) -> dict:
     """Write nothing unless all methods, figures, and summaries complete."""
     validate_configuration(config)
     validate_steps(step_sizes)
-    step_sizes = {method: validate_real_parameter(value, f"{method} step", positive=True)
-                  for method, value in step_sizes.items()}
+    step_sizes = {
+        method: validate_real_parameter(value, f"{method} step", positive=True) for method, value in step_sizes.items()
+    }
     validate_caller_source(source)
     safe_source = source_label(source)
     check_output_available(output)
     X, y = validate_mnist(X, y)
     prepare_binary(
-        X, y, pair=config.digits, protocol=config.protocol,
-        train_per_class=config.train_per_class, test_per_class=config.test_per_class,
+        X,
+        y,
+        pair=config.digits,
+        protocol=config.protocol,
+        train_per_class=config.train_per_class,
+        test_per_class=config.test_per_class,
         seed=config.seed,
     )
     dataset_hash = hash_arrays(X, y)
@@ -55,16 +65,18 @@ def compare(
                 directory = stage / method
                 report = run_dataset(X, y, current, output=directory, source=source)
                 with np.load(directory / "numeric_results.npz", allow_pickle=False) as values:
-                    ax.plot(values["iteration"], values["objective"],
-                            label=f"{method} (eta={step_sizes[method]:g})")
+                    ax.plot(values["iteration"], values["objective"], label=f"{method} (eta={step_sizes[method]:g})")
                 table[method] = {
                     "step_size": step_sizes[method],
                     "final_training_objective": report["optimization"]["final_training_objective"],
                     "evaluation_accuracy": report["evaluation"]["accuracy"],
                     "test_error_count": report["evaluation"]["errors"],
                 }
-            ax.set(xlabel="Completed gradient updates", ylabel="Training objective",
-                   title=f"Directional geometry comparison | {config.protocol} | {safe_source}")
+            ax.set(
+                xlabel="Completed gradient updates",
+                ylabel="Training objective",
+                title=f"Directional geometry comparison | {config.protocol} | {safe_source}",
+            )
             ax.legend()
             ax.grid(alpha=0.25)
             fig.tight_layout()
@@ -72,14 +84,19 @@ def compare(
         finally:
             plt.close(fig)
         summary = {
-            "source": safe_source, "user_supplied_source_note_unverified": source,
+            "source": safe_source,
+            "user_supplied_source_note_unverified": source,
             "dataset_sha256": dataset_hash,
             "acquisition_observation": "not_observed_by_array_api",
             "acquisition_observation_is_authenticated": False,
-            "provenance_verified": False, "protocol": config.protocol,
-            "digits": list(config.digits), "train_per_class": config.train_per_class,
-            "test_per_class": config.test_per_class, "seed": config.seed,
-            "iterations": config.iterations, "l2": config.l2,
+            "provenance_verified": False,
+            "protocol": config.protocol,
+            "digits": list(config.digits),
+            "train_per_class": config.train_per_class,
+            "test_per_class": config.test_per_class,
+            "seed": config.seed,
+            "iterations": config.iterations,
+            "l2": config.l2,
             "caveat": "Steps are fixed in advance; no test-set tuning, no claim of fair hyperparameters.",
             "methods": table,
         }
@@ -105,9 +122,14 @@ def main(argv: list[str] | None = None) -> int:
     options = parser.parse_args(argv)
     steps = {"gd": options.gd_step, "linf": options.linf_step, "coordinate": options.coordinate_step}
     config = Configuration(
-        protocol=options.protocol, digits=tuple(options.digits),
-        train_per_class=options.train_per_class, test_per_class=options.test_per_class,
-        seed=options.seed, iterations=options.iterations, record_every=25, l2=options.l2,
+        protocol=options.protocol,
+        digits=tuple(options.digits),
+        train_per_class=options.train_per_class,
+        test_per_class=options.test_per_class,
+        seed=options.seed,
+        iterations=options.iterations,
+        record_every=25,
+        l2=options.l2,
     )
     validate_configuration(config)
     validate_steps(steps)
@@ -124,8 +146,12 @@ def main(argv: list[str] | None = None) -> int:
         source = "user_supplied_unverified_npz"
         observation = "local_npz_loaded_by_cli_unverified"
     summary = compare(
-        X, y, config=config, step_sizes=steps,
-        output=options.output, source=source,
+        X,
+        y,
+        config=config,
+        step_sizes=steps,
+        output=options.output,
+        source=source,
     )
     # This observation is emitted by the CLI after the loader returned, never
     # supplied to the public array-processing API or saved as array provenance.

@@ -24,7 +24,8 @@ def test_three_methods_same_split_and_real_computed_outputs(fixture_mnist, tmp_p
         *fixture_mnist,
         config=Configuration(train_per_class=4, test_per_class=3, iterations=12, record_every=4),
         step_sizes={"gd": 1e-4, "linf": 1e-8, "coordinate": 1e-4},
-        output=tmp_path, source="synthetic_test_fixture",
+        output=tmp_path,
+        source="synthetic_test_fixture",
     )
     assert set(summary["methods"]) == {"gd", "linf", "coordinate"}
     assert summary["source"] == "synthetic_test_fixture"
@@ -45,7 +46,9 @@ def test_comparison_rejects_missing_or_invalid_step_sizes(fixture_mnist, tmp_pat
         script.compare(*fixture_mnist, config=cfg, step_sizes={"gd": 0.1}, output=tmp_path, source="fixture")
     with pytest.raises(ValueError):
         script.compare(
-            *fixture_mnist, config=cfg,
+            *fixture_mnist,
+            config=cfg,
             step_sizes={"gd": 0.1, "linf": np.nan, "coordinate": 0.1},
-            output=tmp_path, source="fixture",
+            output=tmp_path,
+            source="fixture",
         )

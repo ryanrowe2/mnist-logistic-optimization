@@ -2,6 +2,7 @@
 
 Requires a network-accessible or cached OpenML dataset 554. No fixture fallback.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -22,16 +23,33 @@ def main(argv: list[str] | None = None) -> int:
     check_output_available(args.output_root)
     X, y = load_mnist(data_home=args.data_home)
     configurations = {
-        "historical_4_9": Configuration(protocol="historical", digits=(4, 9), train_per_class=500,
-                                        test_per_class=500, iterations=10000, step_size=1e-4,
-                                        record_every=1, seed=2024, l2=0),
-        "official_4_9": Configuration(protocol="official", digits=(4, 9), train_per_class=2000,
-                                      test_per_class=500, iterations=2000, step_size=0.3,
-                                      record_every=50, seed=2024, l2=0.01),
+        "historical_4_9": Configuration(
+            protocol="historical",
+            digits=(4, 9),
+            train_per_class=500,
+            test_per_class=500,
+            iterations=10000,
+            step_size=1e-4,
+            record_every=1,
+            seed=2024,
+            l2=0,
+        ),
+        "official_4_9": Configuration(
+            protocol="official",
+            digits=(4, 9),
+            train_per_class=2000,
+            test_per_class=500,
+            iterations=2000,
+            step_size=0.3,
+            record_every=50,
+            seed=2024,
+            l2=0.01,
+        ),
     }
     with stage_output(args.output_root) as stage:
         summary = {
-            "source": OPENML_LOADER_SOURCE, "dataset_sha256": hash_arrays(X, y),
+            "source": OPENML_LOADER_SOURCE,
+            "dataset_sha256": hash_arrays(X, y),
             "note": (
                 "Observed measurements from the fetch_openml(data_id=554) route; no independently "
                 "verified reference digest. Historical shuffle seed is unknown."
