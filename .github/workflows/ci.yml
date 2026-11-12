@@ -43,8 +43,10 @@ jobs:
           cache: pip
       - name: Install package and QA requirements
         run: python -m pip install -e '.[dev]'
-      - name: Ruff static analysis
-        run: ruff check .
+      - name: Ruff static analysis and formatting
+        run: |
+          ruff check .
+          ruff format --check .
       - name: Tests and coverage (offline and deterministic)
         run: python -m pytest -p pytest_cov -m 'not network' --cov=mnist_optimization --cov=scripts --cov-report=term-missing --cov-fail-under=80
       - name: Build and verify portable repository release ZIP

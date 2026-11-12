@@ -40,7 +40,7 @@ def compare(
     safe_source = source_label(source)
     check_output_available(output)
     X, y = validate_mnist(X, y)
-    split = prepare_binary(
+    prepare_binary(
         X, y, pair=config.digits, protocol=config.protocol,
         train_per_class=config.train_per_class, test_per_class=config.test_per_class,
         seed=config.seed,

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mnist-logistic-optimization"
-version = "1.15.0"
+version = "1.15.1"
 description = "Reconstructed NumPy logistic regression and rigorously validated numerical optimization experiments on MNIST."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -17,8 +17,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-mnist = ["scikit-learn>=1.4,<2", "packaging>=23,<27"]
-dev = ["pytest>=8,<10", "pytest-cov>=5,<8", "ruff>=0.8,<1", "scikit-learn>=1.4,<2", "packaging>=23,<27"]
+mnist = ["scikit-learn>=1.4,<2", "pandas>=2.2,<4", "packaging>=23,<27"]
+dev = ["pandas>=2.2,<4", "pytest>=8,<10", "pytest-cov>=5,<8", "ruff>=0.8,<1", "scikit-learn>=1.4,<2", "packaging>=23,<27"]
 
 [project.scripts]
 mnist-optimize = "mnist_optimization.experiments:main"

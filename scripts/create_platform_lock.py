@@ -97,14 +97,21 @@ def _read_wheel(path: Path, supported_tags: set) -> tuple[str, Version, list[Req
                         raise ValueError("wheel member count or duplicate paths")
                     if sum(m.file_size for m in members) > MAX_EXPANDED_BYTES:
                         raise ValueError("wheel expanded size limit exceeded")
+                    directory_entries = set()
                     for member in members:
                         entry = member.filename
-                        parts = entry.split("/")
+                        is_directory = member.is_dir()
+                        parts = entry[:-1].split("/") if is_directory else entry.split("/")
+                        kind = stat.S_IFMT(member.external_attr >> 16)
                         if (not entry or entry.startswith("/") or "\\" in entry
                                 or any(part in ("", ".", "..") for part in parts)
-                                or len(entry) > 1024
-                                or stat.S_IFMT(member.external_attr >> 16) == stat.S_IFLNK):
+                                or len(entry) > 1024 or kind == stat.S_IFLNK
+                                or (is_directory and (member.file_size != 0
+                                                      or kind not in (0, stat.S_IFDIR)))
+                                or (not is_directory and kind == stat.S_IFDIR)):
                             raise ValueError("unsafe or noncanonical wheel path")
+                        if is_directory:
+                            directory_entries.add(entry)
                         if (member.file_size > MAX_MEMBER_BYTES
                                 or member.file_size > MAX_RATIO * max(1, member.compress_size)):
                             raise ValueError("wheel member expansion limit exceeded")
@@ -135,7 +142,7 @@ def _read_wheel(path: Path, supported_tags: set) -> tuple[str, Version, list[Req
                     rows = list(csv.reader(record.splitlines()))
                     listed = set()
                     for row in rows:
-                        if len(row) != 3 or row[0] in listed or row[0] not in names:
+                        if len(row) != 3 or row[0] in listed or row[0] not in names or row[0] in directory_entries:
                             raise ValueError("invalid wheel RECORD")
                         listed.add(row[0])
                         if row[0] != f"{distdir}/RECORD":
@@ -157,7 +164,7 @@ def _read_wheel(path: Path, supported_tags: set) -> tuple[str, Version, list[Req
                                 raise ValueError("wheel RECORD hash mismatch")
                             if row[2] and int(row[2]) != total:
                                 raise ValueError("wheel RECORD size mismatch")
-                    if listed != set(names):
+                    if listed != set(names) - directory_entries:
                         raise ValueError("wheel RECORD omits archive entries")
                     requires = [Requirement(value) for value in metadata.get_all("Requires-Dist", [])]
             except (zipfile.BadZipFile, UnicodeError, KeyError, OSError, ValueError) as exc:

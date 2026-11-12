@@ -59,7 +59,7 @@ def checkout_style_module(parent: Path):
 
 def git(*args, cwd: Path):
     return subprocess.run(["git", *args], cwd=cwd, check=True, text=True,
-                          stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.strip()
+                          capture_output=True).stdout.strip()
 
 
 @pytest.mark.skipif(shutil.which("git") is None, reason="git executable unavailable")

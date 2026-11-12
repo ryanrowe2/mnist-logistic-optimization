@@ -84,7 +84,8 @@ def test_bad_official_prepared_indices_rejected(tmp_path):
 
 
 def test_bad_official_prepared_intercept_rejected(tmp_path):
-    X = np.zeros((2, 785)); X[:, -1] = [1, 0]
+    X = np.zeros((2, 785))
+    X[:, -1] = [1, 0]
     split = BinarySplit(X, np.array([-1, 1]), np.ones((2, 785)), np.array([-1, 1]),
                         np.array([100, 101]), np.array([60000, 60001]),
                         (4, 9), "official", "fixed_divide_255", 42, 784)
@@ -108,7 +109,8 @@ def test_prepared_data_does_not_certify_original_selection(tmp_path):
 
 
 def test_invalid_inventory_is_not_an_exception(tmp_path):
-    folder = tmp_path / "report"; folder.mkdir()
+    folder = tmp_path / "report"
+    folder.mkdir()
     path = folder / "_SUCCESS.json"
     for invalid in ("NOT JSON", "[]", "null", "{}", '{"file_sha256": []}'):
         path.write_text(invalid)

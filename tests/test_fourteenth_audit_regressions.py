@@ -124,7 +124,8 @@ def test_a06_lock_output_symlink_rejected_without_touching_canary(tmp_path):
 def test_a07_external_wheel_symlink_rejected(tmp_path):
     lock = script("create_platform_lock")
     outside = fake_wheel(tmp_path, "fake-core")
-    wheelhouse = tmp_path / "wheels"; wheelhouse.mkdir()
+    wheelhouse = tmp_path / "wheels"
+    wheelhouse.mkdir()
     (wheelhouse / outside.name).symlink_to(outside)
     with pytest.raises(ValueError, match="symlink"):
         lock.create_lock(wheelhouse, tmp_path / "lock.txt", project_root=minimal_project(tmp_path))
@@ -141,10 +142,21 @@ def test_a08_reject_missing_required_wheels(tmp_path):
 
 def test_a09_reject_fake_wheel_even_with_expected_name(tmp_path):
     lock = script("create_platform_lock")
-    wheelhouse = tmp_path / "wheels"; wheelhouse.mkdir()
+    wheelhouse = tmp_path / "wheels"
+    wheelhouse.mkdir()
     (wheelhouse / "fake_core-1.2.3-py3-none-any.whl").write_bytes(b"fake")
     with pytest.raises(ValueError, match="malformed wheel"):
         lock.create_lock(wheelhouse, tmp_path / "lock.txt", project_root=minimal_project(tmp_path))
+
+
+def test_wheelhouse_allows_canonical_directory_records(tmp_path):
+    wheelhouse = complete_fake_wheelhouse(tmp_path)
+    with zipfile.ZipFile(wheelhouse / "fake_core-1.2.3-py3-none-any.whl", "a") as archive:
+        archive.writestr("fake_core/", b"")
+    output = script("create_platform_lock").create_lock(
+        wheelhouse, tmp_path / "lock.txt", project_root=minimal_project(tmp_path)
+    )
+    assert "fake-core==1.2.3" in output.read_text()
 
 
 def test_lock_graph_conflicts_and_installable_fixture(tmp_path):
