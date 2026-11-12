@@ -10,7 +10,7 @@ The engineering question is not simply whether logistic regression classifies di
 
 | Finding | Status | Evidence |
 |---|---|---|
-| 4 vs 9: 96% accuracy on 1,000 evaluation samples | **Reported in 2024; not yet independently rerun** | [Primary report, pp. 13–16](docs/sources/2024-original-report.pdf) |
+| 4 vs 9: 96% accuracy on 1,000 evaluation samples | **2024 reported result; hosted rerun evidence linked separately** | [Primary report, pp. 13–16](docs/sources/2024-original-report.pdf) |
 | 1,000 train, 1,000 evaluation, 10,000 updates, η = 0.0001 | **Recovered historical settings** | [Original experiment reconstruction](docs/original-experiment.md) |
 | Analytic gradient, stable softplus, safe sigmoid | **Implemented and independently tested** | [`logistic.py`](src/mnist_optimization/logistic.py), [`test_gradient.py`](tests/test_gradient.py) |
 | Distinct historical and official MNIST protocols | **Implemented and tested offline** | [`data.py`](src/mnist_optimization/data.py) |
