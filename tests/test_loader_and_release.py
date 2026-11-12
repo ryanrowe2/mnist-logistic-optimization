@@ -32,7 +32,7 @@ def test_loader_uses_exact_openml_id_554_but_never_certifies_array_identity(monk
         "data_id": 554,
         "return_X_y": True,
         "as_frame": False,
-        "parser": "auto",
+        "parser": "liac-arff",
         "data_home": str(tmp_path / "cache"),
     }
     assert hash_arrays(X, y) == hash_arrays(fixture_mnist[0], fixture_mnist[1].astype(np.int64))

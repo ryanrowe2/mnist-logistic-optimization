@@ -42,7 +42,7 @@ def load_mnist(*, data_home: str | Path | None = None) -> tuple[np.ndarray, np.n
             data_id=554,
             return_X_y=True,
             as_frame=False,
-            parser="auto",
+            parser="liac-arff",
             data_home=str(data_home) if data_home is not None else None,
         )
     except Exception as exc:

@@ -124,7 +124,7 @@ def _read_wheel(path: Path, supported_tags: set) -> tuple[str, Version, list[Req
                             1, member.compress_size
                         ):
                             raise ValueError("wheel member expansion limit exceeded")
-                    candidates = [n for n in names if n.endswith(".dist-info/METADATA")]
+                    candidates = [n for n in names if n.count("/") == 1 and n.endswith(".dist-info/METADATA")]
                     if len(candidates) != 1:
                         raise ValueError("wheel lacks unique METADATA")
                     distdir = candidates[0].rsplit("/", 1)[0]

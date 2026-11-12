@@ -121,6 +121,20 @@ def test_n03_reject_conflicting_wheel_variant_dependencies(tmp_path):
     assert not (tmp_path / "lock.txt").exists()
 
 
+
+def test_n03_nested_vendored_metadata_is_not_a_second_distribution(tmp_path):
+    root, store = project(tmp_path / "proj", ["fake-core>=1"]), tmp_path / "wheels"
+    wheel(
+        store,
+        "fake-core",
+        additional={"fake_core/_vendor/nested-1.0.dist-info/METADATA": b"vendored metadata\\n"},
+    )
+    for name, version in (("wheel", "1"), ("packaging", "25"), ("ruff", "0.8.6")):
+        wheel(store, name, version=version)
+    lock = locker().create_lock(store, tmp_path / "lock.txt", project_root=root).read_text()
+    assert "fake-core==1.0" in lock
+
+
 def test_n04_reject_unavailable_requested_extra(tmp_path):
     root, store = project(tmp_path / "proj", ["fake-core[extra1]>=1"]), tmp_path / "wheels"
     wheel(store, "fake-core", requires=['missing-extra>=1; extra == "extra1"'])
