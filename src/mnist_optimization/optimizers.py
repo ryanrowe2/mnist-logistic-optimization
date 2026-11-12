@@ -9,8 +9,12 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
 from .logistic import (
-    logistic_gradient, logistic_loss, real_matrix, validate_data,
-    validate_real_parameter, validate_weights,
+    logistic_gradient,
+    logistic_loss,
+    real_matrix,
+    validate_data,
+    validate_real_parameter,
+    validate_weights,
 )
 
 Method = Literal["gd", "linf", "coordinate"]

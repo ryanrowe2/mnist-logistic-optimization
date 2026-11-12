@@ -3,6 +3,7 @@
 Safety: no symlink traversal, exclusive temporary files, atomic publication.
 Run from any directory: python scripts/build_release.py --output /path/to/release.zip
 """
+
 from __future__ import annotations
 
 import argparse
@@ -27,9 +28,15 @@ def release_files() -> tuple[str, ...]:
     if not isinstance(names, list) or not names or len(names) != len(set(names)):
         raise ValueError("invalid or duplicated release inventory entries")
     for name in names:
-        if (not isinstance(name, str) or not name or name.startswith("/") or "\\" in name
-                or ":" in name or any(part in ("", ".", "..") for part in name.split("/"))
-                or name == "MANIFEST.sha256"):
+        if (
+            not isinstance(name, str)
+            or not name
+            or name.startswith("/")
+            or "\\" in name
+            or ":" in name
+            or any(part in ("", ".", "..") for part in name.split("/"))
+            or name == "MANIFEST.sha256"
+        ):
             raise ValueError("unsafe release inventory entry")
     if not {"release-files.json", "pyproject.toml", "README.md", "scripts/verify_release.py"} <= set(names):
         raise ValueError("release inventory misses required metadata")
@@ -74,8 +81,7 @@ def _read_regular(path: Path) -> bytes:
 
 def manifest_contents(root: Path, files: list[Path]) -> bytes:
     """Return a hash inventory using the same no-follow file-reader as the builder."""
-    rows = [f"{hashlib.sha256(_read_regular(file)).hexdigest()}  {file.relative_to(root).as_posix()}"
-            for file in files]
+    rows = [f"{hashlib.sha256(_read_regular(file)).hexdigest()}  {file.relative_to(root).as_posix()}" for file in files]
     return ("\n".join(rows) + "\n").encode("utf-8")
 
 
@@ -91,10 +97,10 @@ def build_archive(output: Path, root: Path = ROOT) -> Path:
     # Capture each file exactly once: archive bytes and manifest cannot diverge
     # if a source file changes between hashing and ZIP construction.
     snapshots = {file.relative_to(root).as_posix(): _read_regular(file) for file in files}
-    manifest = ("\n".join(
-        f"{hashlib.sha256(content).hexdigest()}  {name}"
-        for name, content in sorted(snapshots.items())
-    ) + "\n").encode("utf-8")
+    manifest = (
+        "\n".join(f"{hashlib.sha256(content).hexdigest()}  {name}" for name, content in sorted(snapshots.items()))
+        + "\n"
+    ).encode("utf-8")
     destination_manifest = root / "MANIFEST.sha256"
     _guard_path(destination_manifest)
     if destination_manifest.exists() and not destination_manifest.is_file():

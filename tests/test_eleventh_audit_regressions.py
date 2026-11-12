@@ -19,15 +19,29 @@ def _small_split() -> BinarySplit:
     train = np.array([[1.0, 0.0], [2.0, 0.0], [-1.0, 0.0], [-2.0, 0.0]])
     test = np.array([[2.0, 0.0], [-2.0, 0.0]])
     return BinarySplit(
-        train, np.array([1, 1, -1, -1]), test, np.array([1, -1]),
-        np.arange(4), np.arange(4, 6), (4, 9), "historical", "raw_0_255", 42, None,
+        train,
+        np.array([1, 1, -1, -1]),
+        test,
+        np.array([1, -1]),
+        np.arange(4),
+        np.arange(4, 6),
+        (4, 9),
+        "historical",
+        "raw_0_255",
+        42,
+        None,
     )
 
 
-@pytest.mark.parametrize("claimed_source", [
-    "Verified OpenML MNIST data_id=554 (canonical upstream identity confirmed)",
-    "iNsPeCtEd oPeNmL dAtA", "CANONICAL source verified", "AUTHENTICATED dataset",
-])
+@pytest.mark.parametrize(
+    "claimed_source",
+    [
+        "Verified OpenML MNIST data_id=554 (canonical upstream identity confirmed)",
+        "iNsPeCtEd oPeNmL dAtA",
+        "CANONICAL source verified",
+        "AUTHENTICATED dataset",
+    ],
+)
 def test_caller_note_cannot_be_authoritative_source(claimed_source, tmp_path):
     cfg = Configuration(train_per_class=2, test_per_class=1, iterations=2, seed=42)
     target = tmp_path / "results"
@@ -54,6 +68,7 @@ def test_file_transport_cannot_be_claimed_by_array_api():
 def test_unknown_source_text_is_never_used_as_figure_provenance(tmp_path, monkeypatch):
     seen = []
     from mnist_optimization import experiments
+
     real_save_figures = experiments.save_figures
 
     def capture(*args, **kwargs):
@@ -66,11 +81,14 @@ def test_unknown_source_text_is_never_used_as_figure_provenance(tmp_path, monkey
     assert seen == ["user_supplied_unverified_prepared_split"]
 
 
-@pytest.mark.parametrize("alter", [
-    lambda text: text.replace('"status": "complete"', '"status": "incomplete", "status": "complete"'),
-    lambda text: text.replace('"schema_version": 2', '"schema_version": 1, "schema_version": 2'),
-    lambda text: text.replace('"directories": []', '"directories": [], "directories": []'),
-])
+@pytest.mark.parametrize(
+    "alter",
+    [
+        lambda text: text.replace('"status": "complete"', '"status": "incomplete", "status": "complete"'),
+        lambda text: text.replace('"schema_version": 2', '"schema_version": 1, "schema_version": 2'),
+        lambda text: text.replace('"directories": []', '"directories": [], "directories": []'),
+    ],
+)
 def test_duplicate_json_keys_in_completion_marker_fail_closed(tmp_path, alter):
     root = tmp_path / "complete"
     root.mkdir()

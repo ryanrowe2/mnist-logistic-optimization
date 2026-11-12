@@ -40,10 +40,16 @@ def main() -> int:
     resultpath = root / "results/synthetic_validation.json"
     _guard(figpath)
     _guard(resultpath)
-    X = np.array([
-        [3.0, 1.0], [1.0, 2.0], [-1.0, -3.0],
-        [-3.0, -1.0], [1.0, -0.25], [-1.0, 0.5],
-    ])
+    X = np.array(
+        [
+            [3.0, 1.0],
+            [1.0, 2.0],
+            [-1.0, -3.0],
+            [-3.0, -1.0],
+            [1.0, -0.25],
+            [-1.0, 0.5],
+        ]
+    )
     y = np.array([1, 1, -1, -1, 1, -1])
     methods = ("gd", "linf", "coordinate")
     rows = {}
@@ -63,7 +69,8 @@ def main() -> int:
             raise AssertionError(f"expected loss reduction for {method}")
         ax.plot(result.iterations, result.losses, lw=1.75, label=method)
     ax.set(
-        xlabel="Completed updates", ylabel="Mean logistic loss",
+        xlabel="Completed updates",
+        ylabel="Mean logistic loss",
         title="Synthetic 2-feature logistic loss (NOT MNIST)",
     )
     ax.grid(alpha=0.25)
@@ -76,13 +83,16 @@ def main() -> int:
     weights = np.array([0.2, -0.3])
     epsilon = 1e-6
     exact = logistic_gradient(weights, X, y)
-    numeric = np.array([
-        (
-            logistic_loss(weights + epsilon * np.eye(2)[j], X, y)
-            - logistic_loss(weights - epsilon * np.eye(2)[j], X, y)
-        ) / (2 * epsilon)
-        for j in range(2)
-    ])
+    numeric = np.array(
+        [
+            (
+                logistic_loss(weights + epsilon * np.eye(2)[j], X, y)
+                - logistic_loss(weights - epsilon * np.eye(2)[j], X, y)
+            )
+            / (2 * epsilon)
+            for j in range(2)
+        ]
+    )
     difference = float(np.max(np.abs(exact - numeric)))
     if difference > 1e-7:
         raise AssertionError(f"finite difference gradient check failed: {difference}")

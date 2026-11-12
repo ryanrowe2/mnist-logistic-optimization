@@ -1,4 +1,5 @@
 """Independently verify every archived file hash, including completeness and topology."""
+
 from __future__ import annotations
 
 import argparse
@@ -22,9 +23,14 @@ def expected_release_files() -> set[str]:
     """Read the *local source-controlled* allowlist, not the untrusted ZIP's list."""
     inventory = json.loads(SPEC_FILE.read_text(encoding="utf-8"))
     names = inventory.get("files")
-    if (inventory.get("schema") != 1 or inventory.get("project") != PROJECT
-            or not isinstance(names, list) or not names or not all(isinstance(n, str) for n in names)
-            or len(names) != len(set(names))):
+    if (
+        inventory.get("schema") != 1
+        or inventory.get("project") != PROJECT
+        or not isinstance(names, list)
+        or not names
+        or not all(isinstance(n, str) for n in names)
+        or len(names) != len(set(names))
+    ):
         raise ValueError("invalid local release inventory")
     allowed = set(names)
     if "release-files.json" not in allowed:
@@ -49,8 +55,14 @@ def verify_directory(root: Path) -> None:
             raise ValueError("invalid MANIFEST.sha256 syntax")
         digest, name = match.groups()
         pure = PurePosixPath(name)
-        if (pure.is_absolute() or name != pure.as_posix() or ".." in pure.parts
-                or "\\" in name or len(pure.parts) == 0 or name == "MANIFEST.sha256"):
+        if (
+            pure.is_absolute()
+            or name != pure.as_posix()
+            or ".." in pure.parts
+            or "\\" in name
+            or len(pure.parts) == 0
+            or name == "MANIFEST.sha256"
+        ):
             raise ValueError("unsafe or self-referencing manifest path")
         if name in expected:
             raise ValueError("duplicate manifest path")
@@ -97,15 +109,24 @@ def verify_archive(zip_path: Path) -> None:
             name = member.filename
             relative = PurePosixPath(name)
             mode = member.external_attr >> 16
-            if (member.file_size > MAX_MEMBER_BYTES
-                    or member.file_size > MAX_COMPRESSION_RATIO * max(member.compress_size, 1)):
+            if member.file_size > MAX_MEMBER_BYTES or member.file_size > MAX_COMPRESSION_RATIO * max(
+                member.compress_size, 1
+            ):
                 raise ValueError(f"archive expansion limits exceeded: {name}")
-            if (name.endswith("/") or name != relative.as_posix()
-                    or relative.is_absolute() or ".." in relative.parts
-                    or len(relative.parts) < 2 or relative.parts[0] != PROJECT
-                    or "\\" in name or ":" in name or member.create_system != 3
-                    or stat.S_IFMT(mode) != stat.S_IFREG
-                    or member.compress_type != ZIP_DEFLATED or (member.flag_bits & 0x1)):
+            if (
+                name.endswith("/")
+                or name != relative.as_posix()
+                or relative.is_absolute()
+                or ".." in relative.parts
+                or len(relative.parts) < 2
+                or relative.parts[0] != PROJECT
+                or "\\" in name
+                or ":" in name
+                or member.create_system != 3
+                or stat.S_IFMT(mode) != stat.S_IFREG
+                or member.compress_type != ZIP_DEFLATED
+                or (member.flag_bits & 0x1)
+            ):
                 raise ValueError(f"unsafe, noncanonical, or nonregular archive entry: {name}")
         prefix = f"{PROJECT}/"
         manifest_name = prefix + "MANIFEST.sha256"
@@ -119,9 +140,14 @@ def verify_archive(zip_path: Path) -> None:
                 raise ValueError("invalid archive manifest syntax")
             _digest, name = match.groups()
             normalized = PurePosixPath(name)
-            if (name != normalized.as_posix() or normalized.is_absolute()
-                    or ".." in normalized.parts or "\\" in name
-                    or name == "MANIFEST.sha256" or name in inventory):
+            if (
+                name != normalized.as_posix()
+                or normalized.is_absolute()
+                or ".." in normalized.parts
+                or "\\" in name
+                or name == "MANIFEST.sha256"
+                or name in inventory
+            ):
                 raise ValueError("unsafe or duplicate archive manifest entry")
             inventory.add(name)
         if inventory != expected_release_files():

@@ -1,4 +1,5 @@
 """Regression tests for the 13-finding independent release audit."""
+
 from __future__ import annotations
 
 import importlib.util
@@ -39,13 +40,13 @@ def test_linf_rejects_gradient_sum_overflow_without_returning_inf():
 
 @pytest.mark.parametrize("bad", [True, np.bool_(True), 1j, "0.1", np.nan, np.inf])
 def test_public_optimizer_rejects_invalid_parameter_types(bad):
-    X, y = [[1.], [-1.]], [1, -1]
+    X, y = [[1.0], [-1.0]], [1, -1]
     for field in ("step_size", "l2"):
         with pytest.raises(ValueError):
             optimize(X, y, iterations=1, **{field: bad})
     for fun in (logistic_loss, logistic_gradient):
         with pytest.raises(ValueError):
-            fun([0.], X, y, l2=bad)
+            fun([0.0], X, y, l2=bad)
 
 
 def test_grid_bool_is_invalid():
@@ -58,7 +59,7 @@ def test_grid_bool_is_invalid():
 @pytest.mark.parametrize("bad", [[True, True], [1 + 0j, -1 + 0j], ["1", "-1"]])
 def test_training_labels_cannot_be_lossily_coerced(bad):
     with pytest.raises(ValueError):
-        validate_data([[1.], [0.]], bad)
+        validate_data([[1.0], [0.0]], bad)
 
 
 def test_digit_labels_and_arguments_are_strict(fixture_mnist):
@@ -73,42 +74,80 @@ def test_digit_labels_and_arguments_are_strict(fixture_mnist):
 
 def test_bad_official_prepared_indices_rejected(tmp_path):
     split = BinarySplit(
-        np.ones((2, 785)), np.array([-1, 1]), np.ones((2, 785)), np.array([-1, 1]),
-        np.array([10, 11]), np.array([20, 21]), (4, 9), "official", "fixed_divide_255", 42, 784,
+        np.ones((2, 785)),
+        np.array([-1, 1]),
+        np.ones((2, 785)),
+        np.array([-1, 1]),
+        np.array([10, 11]),
+        np.array([20, 21]),
+        (4, 9),
+        "official",
+        "fixed_divide_255",
+        42,
+        784,
     )
-    config = Configuration(protocol="official", train_per_class=1, test_per_class=1,
-                           seed=42, iterations=1, step_size=0.05)
+    config = Configuration(
+        protocol="official", train_per_class=1, test_per_class=1, seed=42, iterations=1, step_size=0.05
+    )
     with pytest.raises(ValueError, match="boundaries"):
         run_prepared(split, config, output=tmp_path / "bad", source="fixture")
     assert not (tmp_path / "bad").exists()
 
 
 def test_bad_official_prepared_intercept_rejected(tmp_path):
-    X = np.zeros((2, 785)); X[:, -1] = [1, 0]
-    split = BinarySplit(X, np.array([-1, 1]), np.ones((2, 785)), np.array([-1, 1]),
-                        np.array([100, 101]), np.array([60000, 60001]),
-                        (4, 9), "official", "fixed_divide_255", 42, 784)
+    X = np.zeros((2, 785))
+    X[:, -1] = [1, 0]
+    split = BinarySplit(
+        X,
+        np.array([-1, 1]),
+        np.ones((2, 785)),
+        np.array([-1, 1]),
+        np.array([100, 101]),
+        np.array([60000, 60001]),
+        (4, 9),
+        "official",
+        "fixed_divide_255",
+        42,
+        784,
+    )
     with pytest.raises(ValueError, match="intercepts"):
-        run_prepared(split, Configuration(protocol="official", train_per_class=1,
-                                         test_per_class=1, seed=42, iterations=1),
-                     output=tmp_path / "bad", source="fixture")
+        run_prepared(
+            split,
+            Configuration(protocol="official", train_per_class=1, test_per_class=1, seed=42, iterations=1),
+            output=tmp_path / "bad",
+            source="fixture",
+        )
 
 
 def test_prepared_data_does_not_certify_original_selection(tmp_path):
-    train = np.array([[1., 0.], [-1., 0.]])
-    split = BinarySplit(train, np.array([1, -1]), train.copy(), np.array([1, -1]),
-                        np.array([100, 101]), np.array([102, 103]),
-                        (4, 9), "historical", "raw_0_255", 42, None)
-    report = run_prepared(split, Configuration(train_per_class=1, test_per_class=1,
-                                               seed=42, iterations=1),
-                          output=tmp_path / "prepared", source="fixture")
+    train = np.array([[1.0, 0.0], [-1.0, 0.0]])
+    split = BinarySplit(
+        train,
+        np.array([1, -1]),
+        train.copy(),
+        np.array([1, -1]),
+        np.array([100, 101]),
+        np.array([102, 103]),
+        (4, 9),
+        "historical",
+        "raw_0_255",
+        42,
+        None,
+    )
+    report = run_prepared(
+        split,
+        Configuration(train_per_class=1, test_per_class=1, seed=42, iterations=1),
+        output=tmp_path / "prepared",
+        source="fixture",
+    )
     assert report["data"]["protocol"] == "user_supplied_prepared_unverified"
     assert report["data"]["requested_protocol"] == "historical"
     assert report["data"]["selection_protocol_validated"] is False
 
 
 def test_invalid_inventory_is_not_an_exception(tmp_path):
-    folder = tmp_path / "report"; folder.mkdir()
+    folder = tmp_path / "report"
+    folder.mkdir()
     path = folder / "_SUCCESS.json"
     for invalid in ("NOT JSON", "[]", "null", "{}", '{"file_sha256": []}'):
         path.write_text(invalid)
@@ -117,6 +156,7 @@ def test_invalid_inventory_is_not_an_exception(tmp_path):
 
 def test_fixed_image_scale_for_both_pixel_protocols(monkeypatch, tmp_path):
     from matplotlib.axes import Axes
+
     vmax_values = []
     old_imshow = Axes.imshow
 
@@ -130,12 +170,23 @@ def test_fixed_image_scale_for_both_pixel_protocols(monkeypatch, tmp_path):
         X = np.zeros((2, columns))
         if columns == 785:
             X[:, -1] = 1
-        result = OptimizationResult(weights=np.zeros(columns), iterations=np.array([0, 1]),
-                                    losses=np.array([.69, .68]), update_counts=np.zeros(columns, dtype=int),
-                                    method="gd")
+        result = OptimizationResult(
+            weights=np.zeros(columns),
+            iterations=np.array([0, 1]),
+            losses=np.array([0.69, 0.68]),
+            update_counts=np.zeros(columns, dtype=int),
+            method="gd",
+        )
         before = len(vmax_values)
-        save_figures(result, X, np.array([-1, 1]), np.array([-1, 1]),
-                     tmp_path / str(columns), pair=(4, 9), provenance="synthetic")
+        save_figures(
+            result,
+            X,
+            np.array([-1, 1]),
+            np.array([-1, 1]),
+            tmp_path / str(columns),
+            pair=(4, 9),
+            provenance="synthetic",
+        )
         assert vmax_values[before:] == [expected, expected]
 
 
@@ -147,7 +198,7 @@ def test_wilson_confidence_intervals_correct_and_boundary_safe():
     assert low["lower"] == pytest.approx(0.0)
     assert low["upper"] == pytest.approx(1 - high["lower"], abs=1e-6)
     m = metrics([-1, -1, 1, 1], [-1, -1, -1, 1])
-    assert m["accuracy_wilson_95_interval"]["lower"] < .75 < m["accuracy_wilson_95_interval"]["upper"]
+    assert m["accuracy_wilson_95_interval"]["lower"] < 0.75 < m["accuracy_wilson_95_interval"]["upper"]
     assert m["recall_wilson_95_by_class"]["negative"]["upper"] == 1
     for s, n in ((-1, 4), (5, 3), (True, 3)):
         with pytest.raises(ValueError):
@@ -168,8 +219,9 @@ def test_actual_release_zip_extracts_builds_installs_and_detects_tampering(tmp_p
     assert "mnt/data" not in "\n".join(n for n in ZipFile(zip_path).namelist())
     verifier.verify_directory(project)
     if sys.platform.startswith("linux") and subprocess.run(["which", "sha256sum"], capture_output=True).returncode == 0:
-        result = subprocess.run(["sha256sum", "-c", "MANIFEST.sha256"], cwd=project,
-                                capture_output=True, text=True, timeout=20)
+        result = subprocess.run(
+            ["sha256sum", "-c", "MANIFEST.sha256"], cwd=project, capture_output=True, text=True, timeout=20
+        )
         assert result.returncode == 0, result.stderr
     readme = project / "README.md"
     original_readme = readme.read_bytes()
@@ -185,25 +237,41 @@ def test_actual_release_zip_extracts_builds_installs_and_detects_tampering(tmp_p
     artifacts = list(wheels.glob("*.whl"))
     assert len(artifacts) == 1
     installed = tmp_path / "installed"
-    installation = subprocess.run([sys.executable, "-m", "pip", "install", "--no-deps", "--target",
-                                   str(installed), str(artifacts[0])], capture_output=True, text=True, timeout=90)
+    installation = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "--no-deps", "--target", str(installed), str(artifacts[0])],
+        capture_output=True,
+        text=True,
+        timeout=90,
+    )
     assert installation.returncode == 0, installation.stderr[-2000:]
     env = dict(os.environ, PYTHONPATH=str(installed))
-    smoke = subprocess.run([sys.executable, "-m", "mnist_optimization.experiments", "--help"],
-                           cwd=tmp_path, env=env, capture_output=True, text=True, timeout=30)
+    smoke = subprocess.run(
+        [sys.executable, "-m", "mnist_optimization.experiments", "--help"],
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
     assert smoke.returncode == 0 and "--protocol" in smoke.stdout
     executable = installed / "bin" / "mnist-optimize"
     if executable.exists():
-        direct = subprocess.run([str(executable), "--help"], cwd=tmp_path, env=env,
-                                capture_output=True, text=True, timeout=30)
+        direct = subprocess.run(
+            [str(executable), "--help"], cwd=tmp_path, env=env, capture_output=True, text=True, timeout=30
+        )
         assert direct.returncode == 0 and "--protocol" in direct.stdout
     assert list(project.rglob("pyproject.toml")) == [project / "pyproject.toml"]
 
 
 def test_complete_live_real_mnist_script_exposes_entrypoint():
     env = dict(os.environ, PYTHONPATH=str(ROOT / "src"))
-    result = subprocess.run([sys.executable, str(ROOT / "scripts/verify_real_mnist.py"), "--help"],
-                            env=env, capture_output=True, text=True, timeout=30)
+    result = subprocess.run(
+        [sys.executable, str(ROOT / "scripts/verify_real_mnist.py"), "--help"],
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
     assert result.returncode == 0
     assert "--output-root" in result.stdout
 

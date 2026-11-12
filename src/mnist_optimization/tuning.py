@@ -40,8 +40,12 @@ def train_validation_indices(y: np.ndarray, *, seed: int, fraction: float = 0.2)
     if type(seed) is not int or seed < 0:
         raise ValueError("seed must be a nonnegative Python integer, not bool or a mutable RNG")
     labels = np.asarray(y)
-    if (labels.ndim != 1 or labels.dtype.kind not in "iuf"
-            or not np.all(np.isfinite(labels)) or not np.all(np.isin(labels, (-1, 1)))):
+    if (
+        labels.ndim != 1
+        or labels.dtype.kind not in "iuf"
+        or not np.all(np.isfinite(labels))
+        or not np.all(np.isin(labels, (-1, 1)))
+    ):
         raise ValueError("training labels must be real, binary -1/+1")
     # A single row-keyed random priority is independent of the sign encoding.
     # Each class picks the rows with the smallest priorities: flipping all labels
@@ -63,16 +67,22 @@ def train_validation_indices(y: np.ndarray, *, seed: int, fraction: float = 0.2)
 
 
 def tune_and_evaluate(
-    X: np.ndarray, y: np.ndarray, *, config: Configuration,
-    step_grids: dict[str, list[float]], output: str | Path,
+    X: np.ndarray,
+    y: np.ndarray,
+    *,
+    config: Configuration,
+    step_grids: dict[str, list[float]],
+    output: str | Path,
     source: str = "user_supplied_unverified_array",
     validation_fraction: float = 0.2,
 ) -> dict:
     """Choose each method's step on a training subset; test is untouched until refit."""
     validate_configuration(config)
     validate_grids(step_grids)
-    step_grids = {method: [validate_real_parameter(step, f"{method} step", positive=True)
-                           for step in steps] for method, steps in step_grids.items()}
+    step_grids = {
+        method: [validate_real_parameter(step, f"{method} step", positive=True) for step in steps]
+        for method, steps in step_grids.items()
+    }
     validation_fraction = validate_real_parameter(validation_fraction, "validation fraction", positive=True)
     if validation_fraction >= 1:
         raise ValueError("validation fraction must be in (0,1)")
@@ -81,8 +91,13 @@ def tune_and_evaluate(
     check_output_available(Path(output))
     X, y = validate_mnist(X, y)
     split = prepare_binary(
-        X, y, pair=config.digits, protocol=config.protocol,
-        train_per_class=config.train_per_class, test_per_class=config.test_per_class, seed=config.seed,
+        X,
+        y,
+        pair=config.digits,
+        protocol=config.protocol,
+        train_per_class=config.train_per_class,
+        test_per_class=config.test_per_class,
+        seed=config.seed,
     )
     tr, va = train_validation_indices(split.y_train, seed=config.seed + 1, fraction=validation_fraction)
     with stage_output(output) as stage:
@@ -93,14 +108,21 @@ def tune_and_evaluate(
             for step in step_grids[method]:
                 try:
                     result = optimize(
-                        split.X_train[tr], split.y_train[tr], method=method,
-                        step_size=step, iterations=config.iterations,
+                        split.X_train[tr],
+                        split.y_train[tr],
+                        method=method,
+                        step_size=step,
+                        iterations=config.iterations,
                         record_every=max(1, config.record_every),
-                        l2=config.l2, bias_index=split.bias_index,
+                        l2=config.l2,
+                        bias_index=split.bias_index,
                     )
                     score = logistic_loss(
-                        result.weights, split.X_train[va], split.y_train[va],
-                        l2=config.l2, bias_index=split.bias_index,
+                        result.weights,
+                        split.X_train[va],
+                        split.y_train[va],
+                        l2=config.l2,
+                        bias_index=split.bias_index,
                     )
                 except FloatingPointError as exc:
                     attempts.append({"step_size": step, "validation_objective": None, "error": str(exc)})
@@ -125,29 +147,34 @@ def tune_and_evaluate(
             }
         summary = {
             "schema_version": 1,
-            "source": safe_source, "user_supplied_source_note_unverified": source,
+            "source": safe_source,
+            "user_supplied_source_note_unverified": source,
             "verified_openml": False,
             "acquisition_observation": "not_observed_by_array_api",
             "acquisition_observation_is_authenticated": False,
             "dataset_sha256": hash_arrays(X, y),
-            "protocol": config.protocol, "digit_pair": list(config.digits),
-            "training_n": len(split.y_train), "validation_n": len(va),
-            "selection_training_n": len(tr), "test_n": len(split.y_test),
+            "protocol": config.protocol,
+            "digit_pair": list(config.digits),
+            "training_n": len(split.y_train),
+            "validation_n": len(va),
+            "selection_training_n": len(tr),
+            "test_n": len(split.y_test),
             "validation_fraction": validation_fraction,
-            "seed": config.seed, "selection_seed": config.seed + 1,
+            "seed": config.seed,
+            "selection_seed": config.seed + 1,
             "iterations_per_candidate": config.iterations,
             "matching_budget": "each candidate receives exactly the configured number of full-batch gradients",
             "selection_metric": "minimum train-only held-out regularized logistic objective",
             "selection": candidate_table,
             "final_refit_and_test_once_per_method": final,
             "limitations": (
-                "No general superiority inferred; comparisons vary in vector arithmetic "
-                "and computational cost."
+                "No general superiority inferred; comparisons vary in vector arithmetic and computational cost."
             ),
         }
         np.savez_compressed(
             stage / "train_validation_rows.npz",
-            training_rows=tr, validation_rows=va,
+            training_rows=tr,
+            validation_rows=va,
             training_source_indices=split.train_indices[tr],
             validation_source_indices=split.train_indices[va],
         )
@@ -155,11 +182,13 @@ def tune_and_evaluate(
         try:
             for method in METHODS:
                 valid = [c for c in candidate_table[method]["candidates"] if c["validation_objective"] is not None]
-                ax.plot([c["step_size"] for c in valid],
-                        [c["validation_objective"] for c in valid], "o-", label=method)
+                ax.plot([c["step_size"] for c in valid], [c["validation_objective"] for c in valid], "o-", label=method)
             ax.set_xscale("log")
-            ax.set(xlabel="Step size (log scale)", ylabel="Train-only validation objective",
-                   title="Step-size sensitivity — no test-set tuning")
+            ax.set(
+                xlabel="Step size (log scale)",
+                ylabel="Train-only validation objective",
+                title="Step-size sensitivity — no test-set tuning",
+            )
             ax.legend()
             ax.grid(alpha=0.25)
             fig.tight_layout()

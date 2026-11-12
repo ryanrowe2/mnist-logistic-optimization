@@ -43,8 +43,9 @@ def real_matrix(X: ArrayLike) -> NDArray[np.float64]:
         # Compare integer values, not their rounded float representations.
         beyond_exact_range = (original > 2**53) | (original < -(2**53))
         if np.any(beyond_exact_range):
-            if not np.array_equal(original[beyond_exact_range].astype(object),
-                                  features[beyond_exact_range].astype(object)):
+            if not np.array_equal(
+                original[beyond_exact_range].astype(object), features[beyond_exact_range].astype(object)
+            ):
                 raise ValueError("X contains integers not exactly representable in float64")
     elif original.dtype.kind == "f" and original.dtype.itemsize > np.dtype("float64").itemsize:
         # Never silently round extended-precision features to the NumPy model dtype.
@@ -82,8 +83,10 @@ def _exact_dot(row: NDArray[np.float64], weights: NDArray[np.float64]) -> float:
     with localcontext() as context:
         # 2 * 308 decimal exponent range + binary mantissa and headroom for sums.
         context.prec = 1300
-        total = sum((Decimal.from_float(float(a)) * Decimal.from_float(float(b))
-                     for a, b in zip(row, weights, strict=True)), Decimal(0))
+        total = sum(
+            (Decimal.from_float(float(a)) * Decimal.from_float(float(b)) for a, b in zip(row, weights, strict=True)),
+            Decimal(0),
+        )
         try:
             return float(total)
         except OverflowError as exc:
@@ -114,23 +117,25 @@ def _safe_dot(X: NDArray[np.float64], w: NDArray[np.float64]) -> NDArray[np.floa
     return result
 
 
-def _exact_weighted_coordinate(column: NDArray[np.float64],
-                               factors: NDArray[np.float64],
-                               regularizer: float, l2: float) -> float:
+def _exact_weighted_coordinate(
+    column: NDArray[np.float64], factors: NDArray[np.float64], regularizer: float, l2: float
+) -> float:
     with localcontext() as context:
         context.prec = 1300
-        total = sum((Decimal.from_float(float(a)) * Decimal.from_float(float(f))
-                     for a, f in zip(column, factors, strict=True)), Decimal(0))
-        value = (-total / Decimal(len(factors))
-                 + Decimal.from_float(l2) * Decimal.from_float(regularizer))
+        total = sum(
+            (Decimal.from_float(float(a)) * Decimal.from_float(float(f)) for a, f in zip(column, factors, strict=True)),
+            Decimal(0),
+        )
+        value = -total / Decimal(len(factors)) + Decimal.from_float(l2) * Decimal.from_float(regularizer)
         try:
             return float(value)
         except OverflowError as exc:
             raise FloatingPointError("gradient is not representable in float64") from exc
 
 
-def _safe_weighted_gradient(X: NDArray[np.float64], factors: NDArray[np.float64],
-                            reg: NDArray[np.float64], l2: float) -> NDArray[np.float64]:
+def _safe_weighted_gradient(
+    X: NDArray[np.float64], factors: NDArray[np.float64], reg: NDArray[np.float64], l2: float
+) -> NDArray[np.float64]:
     """Accurate weighted reduction even if finite BLAS cancels small terms."""
     with np.errstate(over="ignore", invalid="ignore"):
         grad = -(X.T @ factors) / len(factors) + l2 * reg
@@ -148,9 +153,7 @@ def _safe_weighted_gradient(X: NDArray[np.float64], factors: NDArray[np.float64]
     return grad
 
 
-def logistic_loss(
-    w: ArrayLike, X: ArrayLike, y: ArrayLike, *, l2: float = 0.0, bias_index: int | None = None
-) -> float:
+def logistic_loss(w: ArrayLike, X: ArrayLike, y: ArrayLike, *, l2: float = 0.0, bias_index: int | None = None) -> float:
     """Mean softplus(-y * (X @ w)) plus l2/2 * ||w_nonbias||^2."""
     features, labels = validate_data(X, y)
     weights = validate_weights(w, features.shape[1])

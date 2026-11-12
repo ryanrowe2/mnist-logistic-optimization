@@ -29,19 +29,23 @@ def script(name: str):
     return module
 
 
-def tamper_archive(source: Path, target: Path, *, add: dict[str, bytes] | None = None,
-                   remove: set[str] | None = None) -> None:
+def tamper_archive(
+    source: Path, target: Path, *, add: dict[str, bytes] | None = None, remove: set[str] | None = None
+) -> None:
     """Build a self-consistent but not allowlisted ZIP to exercise independent verification."""
     with ZipFile(source) as archive:
-        content = {info.filename[len(PROJECT) + 1:]: archive.read(info)
-                   for info in archive.infolist()}
+        content = {info.filename[len(PROJECT) + 1 :]: archive.read(info) for info in archive.infolist()}
     content.update(add or {})
     for name in remove or set():
         content.pop(name)
-    content["MANIFEST.sha256"] = ("\n".join(
-        f"{hashlib.sha256(data).hexdigest()}  {name}"
-        for name, data in sorted(content.items()) if name != "MANIFEST.sha256"
-    ) + "\n").encode()
+    content["MANIFEST.sha256"] = (
+        "\n".join(
+            f"{hashlib.sha256(data).hexdigest()}  {name}"
+            for name, data in sorted(content.items())
+            if name != "MANIFEST.sha256"
+        )
+        + "\n"
+    ).encode()
     with ZipFile(target, "w", compression=ZIP_DEFLATED) as archive:
         for name, data in sorted(content.items()):
             info = ZipInfo(f"{PROJECT}/{name}", (2026, 11, 11, 12, 0, 0))
@@ -106,12 +110,16 @@ def test_gitignore_covers_generated_mnist_outputs(tmp_path):
         pytest.skip("git executable unavailable")
     (tmp_path / ".gitignore").write_bytes((ROOT / ".gitignore").read_bytes())
     subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
-    for path in ("results/full_real_validation/full_real_mnist_summary.json",
-                 "results/arbitrary/output/metrics.json", "real_mnist_validation/results.json"):
+    for path in (
+        "results/full_real_validation/full_real_mnist_summary.json",
+        "results/arbitrary/output/metrics.json",
+        "real_mnist_validation/results.json",
+    ):
         result = subprocess.run(["git", "check-ignore", "--no-index", "-q", path], cwd=tmp_path)
         assert result.returncode == 0, path
-    result = subprocess.run(["git", "check-ignore", "--no-index", "-q",
-                             "results/synthetic_validation.json"], cwd=tmp_path)
+    result = subprocess.run(
+        ["git", "check-ignore", "--no-index", "-q", "results/synthetic_validation.json"], cwd=tmp_path
+    )
     assert result.returncode == 1
 
 

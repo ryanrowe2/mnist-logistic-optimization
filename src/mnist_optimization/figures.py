@@ -47,9 +47,12 @@ def save_figures(
     fig, ax = plt.subplots(figsize=(4.5, 4.0))
     image = ax.imshow(cm, cmap="Blues")
     ax.set(
-        xticks=range(cm.shape[1]), yticks=(0, 1),
+        xticks=range(cm.shape[1]),
+        yticks=(0, 1),
         xticklabels=([str(pair[0]), str(pair[1]), "tie"] if cm.shape[1] == 3 else [str(pair[0]), str(pair[1])]),
-        yticklabels=(str(pair[0]), str(pair[1])), xlabel="Predicted digit", ylabel="True digit",
+        yticklabels=(str(pair[0]), str(pair[1])),
+        xlabel="Predicted digit",
+        ylabel="True digit",
         title=f"Confusion matrix | {title_prefix}",
     )
     for (i, j), count in np.ndenumerate(cm):

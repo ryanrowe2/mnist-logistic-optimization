@@ -1,4 +1,5 @@
 """Offline, synthetic fixtures. Never cite these as MNIST performance results."""
+
 import sys
 from pathlib import Path
 

@@ -92,32 +92,43 @@ def test_observation_cannot_be_supplied_through_public_array_apis(tmp_path):
     config = Configuration(train_per_class=2, test_per_class=1, iterations=1)
     X, y = np.empty((0, 784)), np.empty(0)
     with pytest.raises(TypeError, match="acquisition_observation"):
-        tune_and_evaluate(X, y, config=config, output=tmp_path / "tune", step_grids={},
-                          acquisition_observation=bogus)
+        tune_and_evaluate(X, y, config=config, output=tmp_path / "tune", step_grids={}, acquisition_observation=bogus)
     with pytest.raises(TypeError, match="acquisition_observation"):
-        compare_script().compare(X, y, config=config, step_sizes={}, output=tmp_path / "compare",
-                                 source="synthetic", acquisition_observation=bogus)
+        compare_script().compare(
+            X,
+            y,
+            config=config,
+            step_sizes={},
+            output=tmp_path / "compare",
+            source="synthetic",
+            acquisition_observation=bogus,
+        )
     assert not (tmp_path / "tune").exists()
     assert not (tmp_path / "compare").exists()
 
 
 def test_array_api_reports_fixed_acquisition_state(fixture_mnist, tmp_path):
-    cfg = Configuration(protocol="official", train_per_class=3, test_per_class=2,
-                        iterations=1, record_every=1)
+    cfg = Configuration(protocol="official", train_per_class=3, test_per_class=2, iterations=1, record_every=1)
     grids = {name: [0.0001] for name in ("gd", "linf", "coordinate")}
-    report = tune_and_evaluate(*fixture_mnist, config=cfg, step_grids=grids,
-                               output=tmp_path / "tune", source="synthetic_fixture")
+    report = tune_and_evaluate(
+        *fixture_mnist, config=cfg, step_grids=grids, output=tmp_path / "tune", source="synthetic_fixture"
+    )
     assert report["acquisition_observation"] == "not_observed_by_array_api"
     assert not report["acquisition_observation_is_authenticated"]
     saved = json.loads((tmp_path / "tune/selection.json").read_text(encoding="utf-8"))
     assert saved["acquisition_observation"] == "not_observed_by_array_api"
-    cmp = compare_script().compare(*fixture_mnist, config=cfg,
-                                   step_sizes={key: 0.0001 for key in grids},
-                                   output=tmp_path / "comparison", source="synthetic_fixture")
+    cmp = compare_script().compare(
+        *fixture_mnist,
+        config=cfg,
+        step_sizes={key: 0.0001 for key in grids},
+        output=tmp_path / "comparison",
+        source="synthetic_fixture",
+    )
     assert cmp["acquisition_observation"] == "not_observed_by_array_api"
-    assert json.loads((tmp_path / "comparison/comparison.json").read_text())[
-        "acquisition_observation"
-    ] == "not_observed_by_array_api"
+    assert (
+        json.loads((tmp_path / "comparison/comparison.json").read_text())["acquisition_observation"]
+        == "not_observed_by_array_api"
+    )
 
 
 def test_methodology_documents_identity_keyed_streams():

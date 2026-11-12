@@ -16,7 +16,11 @@ from .figures import save_figures
 from .logistic import logistic_loss, predict, validate_data, validate_real_parameter
 from .optimizers import Method, optimize
 from .provenance import (
-    OPENML_LOADER_SOURCE, environment_fingerprint, hash_arrays, source_label, validate_caller_source,
+    OPENML_LOADER_SOURCE,
+    environment_fingerprint,
+    hash_arrays,
+    source_label,
+    validate_caller_source,
 )
 
 
@@ -56,9 +60,12 @@ def validate_configuration(config: Configuration) -> None:
     """Fast validation before any OpenML download, file open or optimization."""
     if config.protocol not in ("historical", "official"):
         raise ValueError("protocol must be historical or official")
-    if (not isinstance(config.digits, (tuple, list)) or len(config.digits) != 2
-            or any(type(d) is not int or d not in range(10) for d in config.digits)
-            or config.digits[0] == config.digits[1]):
+    if (
+        not isinstance(config.digits, (tuple, list))
+        or len(config.digits) != 2
+        or any(type(d) is not int or d not in range(10) for d in config.digits)
+        or config.digits[0] == config.digits[1]
+    ):
         raise ValueError("digits must be distinct decimal integers 0..9")
     for field in ("train_per_class", "test_per_class", "iterations", "record_every"):
         v = getattr(config, field)
@@ -80,8 +87,13 @@ def validate_split(split: BinarySplit, config: Configuration) -> None:
     for indices, labels in ((split.train_indices, split.y_train), (split.test_indices, split.y_test)):
         if not isinstance(indices, np.ndarray) or indices.ndim != 1:
             raise ValueError("split source indices must be one-dimensional NumPy arrays")
-        if (len(indices) != len(labels) or np.unique(indices).size != len(indices)
-                or indices.dtype.kind not in "iu" or np.any(indices < 0) or np.any(indices >= 70000)):
+        if (
+            len(indices) != len(labels)
+            or np.unique(indices).size != len(indices)
+            or indices.dtype.kind not in "iu"
+            or np.any(indices < 0)
+            or np.any(indices >= 70000)
+        ):
             raise ValueError("split indices must be nonnegative and individually unique")
         if any(int(np.sum(labels == label)) != len(labels) // 2 for label in (-1, 1)):
             raise ValueError("split class balance does not match requested per-class counts")
@@ -95,20 +107,33 @@ def validate_split(split: BinarySplit, config: Configuration) -> None:
         if split.scaling != "raw_0_255" or split.bias_index is not None:
             raise ValueError("historical split must use raw features without an intercept")
     else:
-        if (split.scaling != "fixed_divide_255" or split.bias_index != 784
-                or train.shape[1] != 785 or test.shape[1] != 785):
+        if (
+            split.scaling != "fixed_divide_255"
+            or split.bias_index != 784
+            or train.shape[1] != 785
+            or test.shape[1] != 785
+        ):
             raise ValueError("official split must contain 784 normalized pixels plus an intercept")
         if np.any(split.train_indices >= 60000) or np.any(split.test_indices < 60000):
             raise ValueError("official indices must follow MNIST 60000/10000 train/test boundaries")
-        if (not np.all(train[:, -1] == 1) or not np.all(test[:, -1] == 1)
-                or np.any(train[:, :784] < 0) or np.any(train[:, :784] > 1)
-                or np.any(test[:, :784] < 0) or np.any(test[:, :784] > 1)):
+        if (
+            not np.all(train[:, -1] == 1)
+            or not np.all(test[:, -1] == 1)
+            or np.any(train[:, :784] < 0)
+            or np.any(train[:, :784] > 1)
+            or np.any(test[:, :784] < 0)
+            or np.any(test[:, :784] > 1)
+        ):
             raise ValueError("official pixel values must lie in [0,1] and intercepts must all equal 1")
 
 
 def _execute(
-    split: BinarySplit, config: Configuration, *, output: str | Path,
-    source: str, full_dataset: tuple[np.ndarray, np.ndarray] | None = None,
+    split: BinarySplit,
+    config: Configuration,
+    *,
+    output: str | Path,
+    source: str,
+    full_dataset: tuple[np.ndarray, np.ndarray] | None = None,
 ) -> dict:
     validate_configuration(config)
     # This internal numerical writer cannot create a loader observation from
@@ -127,15 +152,23 @@ def _execute(
         # values. No arbitrary BinarySplit may borrow their hash or claim the
         # selection procedure was run.
         expected = prepare_binary(
-            full_X, full_y, pair=config.digits, protocol=config.protocol,
-            train_per_class=config.train_per_class, test_per_class=config.test_per_class,
+            full_X,
+            full_y,
+            pair=config.digits,
+            protocol=config.protocol,
+            train_per_class=config.train_per_class,
+            test_per_class=config.test_per_class,
             seed=config.seed,
         )
         for field in ("X_train", "y_train", "X_test", "y_test", "train_indices", "test_indices"):
             if not np.array_equal(getattr(split, field), getattr(expected, field)):
                 raise ValueError(f"prepared split does not match the supplied full dataset: {field}")
         if (split.digit_pair, split.protocol, split.scaling, split.seed, split.bias_index) != (
-            expected.digit_pair, expected.protocol, expected.scaling, expected.seed, expected.bias_index,
+            expected.digit_pair,
+            expected.protocol,
+            expected.scaling,
+            expected.seed,
+            expected.bias_index,
         ):
             raise ValueError("prepared split metadata does not match the supplied full dataset")
         dataset_sha256 = hash_arrays(full_X, full_y)
@@ -144,9 +177,14 @@ def _execute(
     check_output_available(destination)
     with stage_output(destination) as stage:
         result = optimize(
-            split.X_train, split.y_train, method=config.method, step_size=config.step_size,
-            iterations=config.iterations, record_every=config.record_every,
-            bias_index=split.bias_index, l2=config.l2,
+            split.X_train,
+            split.y_train,
+            method=config.method,
+            step_size=config.step_size,
+            iterations=config.iterations,
+            record_every=config.record_every,
+            bias_index=split.bias_index,
+            l2=config.l2,
         )
         historical = config.protocol == "historical"
         train_pred = predict(split.X_train, result.weights, historical_sign=historical)
@@ -172,16 +210,20 @@ def _execute(
                 "train_test_overlap": int(np.intersect1d(split.train_indices, split.test_indices).size),
                 "dataset_sha256": dataset_sha256,
                 "prepared_split_sha256": hash_arrays(
-                    split.X_train, split.y_train, split.X_test, split.y_test,
-                    split.train_indices, split.test_indices,
+                    split.X_train,
+                    split.y_train,
+                    split.X_test,
+                    split.y_test,
+                    split.train_indices,
+                    split.test_indices,
                 ),
                 "canonical_mnist_assertion": False,
                 "independent_dataset_identity_verified": False,
                 "provenance_note": (
                     "Selection reconstructed from supplied full-size arrays, with a computed "
                     "dataset digest; acquisition route and canonical MNIST identity unverified."
-                    if selection_validated else
-                    "Caller-provided prepared split; acquisition route, selection provenance, "
+                    if selection_validated
+                    else "Caller-provided prepared split; acquisition route, selection provenance, "
                     "and canonical MNIST identity unverified."
                 ),
             },
@@ -214,14 +256,22 @@ def _execute(
             y_pred_test=test_pred,
         )
         save_figures(
-            result, split.X_test, split.y_test, test_pred,
-            stage / "figures", pair=split.digit_pair, provenance=safe_source,
+            result,
+            split.X_test,
+            split.y_test,
+            test_pred,
+            stage / "figures",
+            pair=split.digit_pair,
+            provenance=safe_source,
         )
     return report
 
 
 def run_prepared(
-    split: BinarySplit, config: Configuration, *, output: str | Path,
+    split: BinarySplit,
+    config: Configuration,
+    *,
+    output: str | Path,
     source: str = "user_supplied_unverified_prepared_split",
 ) -> dict:
     """Prepared arrays are always labeled as user supplied, not certified protocol splits."""
@@ -230,7 +280,11 @@ def run_prepared(
 
 
 def run_dataset(
-    X: np.ndarray, y: np.ndarray, config: Configuration, *, output: str | Path,
+    X: np.ndarray,
+    y: np.ndarray,
+    config: Configuration,
+    *,
+    output: str | Path,
     source: str = "user_supplied_unverified_array",
 ) -> dict:
     validate_configuration(config)
@@ -240,12 +294,20 @@ def run_dataset(
     validate_caller_source(source)
     X, y = validate_mnist(X, y)
     split = prepare_binary(
-        X, y, pair=config.digits, protocol=config.protocol,
-        train_per_class=config.train_per_class, test_per_class=config.test_per_class,
+        X,
+        y,
+        pair=config.digits,
+        protocol=config.protocol,
+        train_per_class=config.train_per_class,
+        test_per_class=config.test_per_class,
         seed=config.seed,
     )
     return _execute(
-        split, config, output=output, source=source, full_dataset=(X, y),
+        split,
+        config,
+        output=output,
+        source=source,
+        full_dataset=(X, y),
     )
 
 
@@ -263,8 +325,12 @@ def parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--l2", type=float, default=None)
     parser.add_argument("--output", type=Path, default=Path("results/latest"))
     parser.add_argument("--data-home", type=Path, default=None, help="scikit-learn OpenML cache")
-    parser.add_argument("--local-npz", type=Path, default=None,
-                        help="local full-size canonical-order X/y arrays, always marked unverified")
+    parser.add_argument(
+        "--local-npz",
+        type=Path,
+        default=None,
+        help="local full-size canonical-order X/y arrays, always marked unverified",
+    )
     return parser.parse_args(argv)
 
 
@@ -272,10 +338,12 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_arguments(argv)
     historical = args.protocol == "historical"
     config = Configuration(
-        protocol=args.protocol, digits=tuple(args.digits),
+        protocol=args.protocol,
+        digits=tuple(args.digits),
         train_per_class=args.train_per_class if args.train_per_class is not None else (500 if historical else 2000),
         test_per_class=args.test_per_class,
-        seed=args.seed, method=args.optimizer,
+        seed=args.seed,
+        method=args.optimizer,
         step_size=args.step_size if args.step_size is not None else (1e-4 if historical else 0.3),
         iterations=args.iterations if args.iterations is not None else (10000 if historical else 2000),
         record_every=args.record_every if args.record_every is not None else (1 if historical else 50),
@@ -297,15 +365,21 @@ def main(argv: list[str] | None = None) -> int:
         report = run_dataset(X, y, config, output=args.output, source=source)
     if args.local_npz is not None:
         observation = "local_npz_loaded_by_cli_unverified"
-    print(json.dumps({
-        "protocol": config.protocol, "source": report["source"],
-        "cli_only_acquisition_observation": observation,
-        "test_accuracy": report["evaluation"]["accuracy"],
-        "test_error": report["evaluation"]["error_rate"],
-        "train_accuracy": report["training"]["accuracy"],
-        "final_objective": report["optimization"]["final_training_objective"],
-        "output": str(args.output),
-    }, indent=2))
+    print(
+        json.dumps(
+            {
+                "protocol": config.protocol,
+                "source": report["source"],
+                "cli_only_acquisition_observation": observation,
+                "test_accuracy": report["evaluation"]["accuracy"],
+                "test_error": report["evaluation"]["error_rate"],
+                "train_accuracy": report["training"]["accuracy"],
+                "final_objective": report["optimization"]["final_training_objective"],
+                "output": str(args.output),
+            },
+            indent=2,
+        )
+    )
     return 0
 
 

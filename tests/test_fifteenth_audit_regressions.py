@@ -1,4 +1,5 @@
 """Consolidated v1.15 numerical and wheel-security adversarial regressions."""
+
 from __future__ import annotations
 
 import base64
@@ -25,8 +26,16 @@ def locker():
     return mod
 
 
-def wheel(folder: Path, name: str, *, version: str = "1.0", build: str = "",
-          requires=(), internal_tag: str = "py3-none-any", additional: dict[str, bytes] | None = None):
+def wheel(
+    folder: Path,
+    name: str,
+    *,
+    version: str = "1.0",
+    build: str = "",
+    requires=(),
+    internal_tag: str = "py3-none-any",
+    additional: dict[str, bytes] | None = None,
+):
     folder.mkdir(exist_ok=True, parents=True)
     safe_name = name.replace("-", "_")
     stem = f"{safe_name}-{version}"
@@ -36,11 +45,11 @@ def wheel(folder: Path, name: str, *, version: str = "1.0", build: str = "",
         f"{safe_name}/__init__.py": b"fixture = True\n",
         f"{dist}/METADATA": (
             f"Metadata-Version: 2.1\nName: {name}\nVersion: {version}\n"
-            + "".join(f"Requires-Dist: {value}\n" for value in requires) + "\n"
+            + "".join(f"Requires-Dist: {value}\n" for value in requires)
+            + "\n"
         ).encode(),
         f"{dist}/WHEEL": (
-            "Wheel-Version: 1.0\nGenerator: regression\nRoot-Is-Purelib: true\n"
-            f"Tag: {internal_tag}\n"
+            f"Wheel-Version: 1.0\nGenerator: regression\nRoot-Is-Purelib: true\nTag: {internal_tag}\n"
         ).encode(),
     }
     files.update(additional or {})
@@ -60,16 +69,22 @@ def wheel(folder: Path, name: str, *, version: str = "1.0", build: str = "",
 
 def project(folder: Path, deps: list[str], build: bool = False):
     folder.mkdir(exist_ok=True, parents=True)
-    top = ('[build-system]\nrequires = ["setuptools>=68", "wheel"]\n'
-           'build-backend = "setuptools.build_meta"\n') if build else ""
+    top = (
+        ('[build-system]\nrequires = ["setuptools>=68", "wheel"]\nbuild-backend = "setuptools.build_meta"\n')
+        if build
+        else ""
+    )
     quoted = ", ".join(repr(d) for d in deps)
-    (folder / "pyproject.toml").write_text(top + f'''[project]
+    (folder / "pyproject.toml").write_text(
+        top
+        + f"""[project]
 name = "local-test-model"
 version = "1.0"
 dependencies = [{quoted}]
 [project.optional-dependencies]
 dev = []
-''')
+"""
+    )
     return folder
 
 
@@ -104,6 +119,19 @@ def test_n03_reject_conflicting_wheel_variant_dependencies(tmp_path):
     with pytest.raises(ValueError, match="conflicting wheel dependency metadata"):
         locker().create_lock(store, tmp_path / "lock.txt", project_root=root)
     assert not (tmp_path / "lock.txt").exists()
+
+
+def test_n03_nested_vendored_metadata_is_not_a_second_distribution(tmp_path):
+    root, store = project(tmp_path / "proj", ["fake-core>=1"]), tmp_path / "wheels"
+    wheel(
+        store,
+        "fake-core",
+        additional={"fake_core/_vendor/nested-1.0.dist-info/METADATA": b"vendored metadata\\n"},
+    )
+    for name, version in (("wheel", "1"), ("packaging", "25"), ("ruff", "0.8.6")):
+        wheel(store, name, version=version)
+    lock = locker().create_lock(store, tmp_path / "lock.txt", project_root=root).read_text()
+    assert "fake-core==1.0" in lock
 
 
 def test_n04_reject_unavailable_requested_extra(tmp_path):

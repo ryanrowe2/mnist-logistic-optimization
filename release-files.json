@@ -20,6 +20,7 @@
     "docs/reproducibility.md",
     "docs/sources/2024-original-report.pdf",
     "figures/synthetic_descent_comparison.png",
+    "locks/reference-py313-linux-hashed.txt",
     "locks/reference-py313-linux.txt",
     "pyproject.toml",
     "release-files.json",

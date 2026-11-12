@@ -10,7 +10,7 @@ The engineering question is not simply whether logistic regression classifies di
 
 | Finding | Status | Evidence |
 |---|---|---|
-| 4 vs 9: 96% accuracy on 1,000 evaluation samples | **Reported in 2024; not yet independently rerun** | [Primary report, pp. 13–16](docs/sources/2024-original-report.pdf) |
+| 4 vs 9: 96% accuracy on 1,000 evaluation samples | **2024 reported result; hosted rerun evidence linked separately** | [Primary report, pp. 13–16](docs/sources/2024-original-report.pdf) |
 | 1,000 train, 1,000 evaluation, 10,000 updates, η = 0.0001 | **Recovered historical settings** | [Original experiment reconstruction](docs/original-experiment.md) |
 | Analytic gradient, stable softplus, safe sigmoid | **Implemented and independently tested** | [`logistic.py`](src/mnist_optimization/logistic.py), [`test_gradient.py`](tests/test_gradient.py) |
 | Distinct historical and official MNIST protocols | **Implemented and tested offline** | [`data.py`](src/mnist_optimization/data.py) |
@@ -18,7 +18,7 @@ The engineering question is not simply whether logistic regression classifies di
 | OpenML MNIST experimental reruns | **Not executed in this offline build** | [Validation status](docs/limitations.md) |
 | Provenance and transactional artifact integrity | **Implemented and regression-tested** | [`provenance.py`](src/mnist_optimization/provenance.py), [`artifacts.py`](src/mnist_optimization/artifacts.py) |
 | Train-only hyperparameter selection | **Implemented and tested offline** | [`tuning.py`](src/mnist_optimization/tuning.py) |
-| Offline mathematical/integration suite | **292 offline tests passed; 85.46% combined package/script coverage; live MNIST unverified** | [Release status](docs/release-status.md) |
+| Offline mathematical/integration suite | **294 offline tests passed; 86.06% combined package/script coverage; hosted certification tracked in release status** | [Release status](docs/release-status.md) |
 
 **Provenance boundary:** A locally computed SHA-256 identifies bytes received; it does **not** certify upstream identity. No caller-issued token or source label can mark an input as independently verified canonical MNIST. The numerical report uses only reviewed, unverified source labels; arbitrary caller text is stored separately as `user_supplied_source_note_unverified` and never used in figure captions. The numerical output records the unverified arrays and any structurally reconstructed selection; the command-line program may separately print that it invoked the OpenML loader, which does not authenticate the dataset.
 
@@ -26,7 +26,7 @@ The engineering question is not simply whether logistic regression classifies di
 
 ## Publication-package integrity and updated empirical metrics
 
-The repository has a portable ZIP builder and an allowlist-enforcing verifier (v1.15.0):
+The repository has a portable ZIP builder and an allowlist-enforcing verifier (v1.15.1):
 
 ```bash
 python scripts/build_release.py --output ../mnist-logistic-optimization-release.zip
@@ -71,7 +71,7 @@ This command executes both full historical and improved runs and saves validated
 The archive contains no newly claimed real-MNIST results; see
 [the latest remediation register](docs/release-status.md).
 
-**Current verification (v1.15.0):** 292 offline tests passed with 1 network test deselected; 85.46% combined coverage (92.55% package, 75.15% scripts). Final exact-ZIP evidence is documented separately. The accompanying certification report records the exact extracted-release results. See [release status](docs/release-status.md) for evidence and external gates. This release additionally requires a clean, tracked Git source tree for commit attribution; makes train-only validation independent of label sign; rejects lossy extended-precision inputs; and prevents staging/manifest symlink overwrites. The preceding release separates caller-provided source notes from enumerated unverified source labels, rejects duplicate JSON keys in completion manifests, and saves training predictions for independent metric checks. Real OpenML MNIST execution, Ruff, hosted CI, and a verified wheel-hash lock still require independent execution.
+**Current verification (v1.15.1):** 294 offline tests passed with 1 network test deselected; 86.06% combined coverage on Python 3.12. Final exact-ZIP evidence is documented separately. The accompanying certification report records the exact extracted-release results. See [release status](docs/release-status.md) for evidence and external gates. This release additionally requires a clean, tracked Git source tree for commit attribution; makes train-only validation independent of label sign; rejects lossy extended-precision inputs; and prevents staging/manifest symlink overwrites. The preceding release separates caller-provided source notes from enumerated unverified source labels, rejects duplicate JSON keys in completion manifests, and saves training predictions for independent metric checks. Ruff lint and formatting, the hosted Python matrix, genuine OpenML smoke, and the Python 3.13/Linux hash-locked installation have passed. Full reproduction outputs and immutable run evidence are tracked in [release status](docs/release-status.md).
 
 ## Algorithms and mathematics
 
@@ -189,15 +189,15 @@ The synthetic diagram is explicitly named as a mathematical smoke demonstration,
 
 ## What this demonstrates
 
-**Software engineering:** A small installable Python package, input contracts, real CLI, tests, planned CI, deterministic scientific JSON, transactional outputs, input hashes, and documented failure modes. **Data analysis:** Explicit dataset provenance, correct separation of evaluation observations, confusion matrices, per-class recall, and an honest treatment of performance uncertainty. **Applied mathematics:** Convexity, smoothness, finite differences, stability, and norm-dependent descent directions.
+**Software engineering:** A small installable Python package, input contracts, real CLI, tests, hosted CI, deterministic scientific JSON, transactional outputs, input hashes, and documented failure modes. **Data analysis:** Explicit dataset provenance, correct separation of evaluation observations, confusion matrices, per-class recall, and an honest treatment of performance uncertainty. **Applied mathematics:** Convexity, smoothness, finite differences, stability, and norm-dependent descent directions.
 
 **Acknowledgment:** The 2024 academic work is the basis for this reconstruction. Later code organization, numerical safeguards, tests, and evaluation protocol are modern portfolio revisions, not represented as original 2024 submissions. Dataset rights remain with the original MNIST rights holders. [Attribution](ATTRIBUTION.md).
 
 ## Release verification and explicit limitations
 
-The corrected local package has **an expanded offline suite with verified release-level regression tests** on Linux / Python 3.13.5. The wheel installs and its entrypoints work locally. **Real OpenML MNIST runs and hosted GitHub Actions have not executed here:** DNS resolution blocks dataset/package acquisition and this repository has not been published. `ruff check .` is specified in CI but was not executable locally. Consequently the package is **ready for further empirical validation and publication review, not certified as a completed real-MNIST reproduction**.
+The v1.15.1 hosted Python 3.10, 3.12 and 3.13 jobs each passed **294 offline tests** with combined coverage of **86.37%, 86.06% and 86.06%**, respectively. Ruff lint and formatting, release ZIP verification, distribution wheel installation and CLI checks passed. The genuine OpenML smoke test and Python 3.13/Linux wheelhouse hash-lock installation also passed. See [release status](docs/release-status.md) for the full reproduction measurements and immutable certification links.
 
-A snapshot of installed Python 3.13/Linux dependency versions is provided at [`locks/reference-py313-linux.txt`](locks/reference-py313-linux.txt); it is not a cross-platform hashed lock. Refer to the [release gates](docs/release-status.md) before publishing performance claims. Historical mode uses the source notebook's exact `np.sign` prediction ties (an ambiguous score 0 is counted as an error); official mode ties predict +1. See [evaluation methodology](docs/evaluation-methodology.md).
+The validated Python 3.13/Linux dependency hash lock is provided at [`locks/reference-py313-linux-hashed.txt`](locks/reference-py313-linux-hashed.txt). Its 27 acquired wheels were installed offline with required SHA-256 hashes and package-import checks. The earlier version snapshot remains at [`locks/reference-py313-linux.txt`](locks/reference-py313-linux.txt). Refer to the [release gates](docs/release-status.md) before publishing performance claims. Historical mode uses the source notebook's exact `np.sign` prediction ties (an ambiguous score 0 is counted as an error); official mode ties predict +1. See [evaluation methodology](docs/evaluation-methodology.md).
 
 
 ### Provenance scope (v1.9.0)

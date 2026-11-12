@@ -1,4 +1,5 @@
 """Independent adversarial regressions for the comprehensive v1.12.0 audit."""
+
 from __future__ import annotations
 
 import importlib.util
@@ -30,8 +31,12 @@ def import_script(name: str):
 def source_copy(folder: Path):
     package = folder / "src" / "mnist_optimization"
     package.mkdir(parents=True)
-    shutil.copytree(ROOT / "src" / "mnist_optimization", package, dirs_exist_ok=True,
-                    ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+    shutil.copytree(
+        ROOT / "src" / "mnist_optimization",
+        package,
+        dirs_exist_ok=True,
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+    )
     (folder / "scripts").mkdir()
     (folder / "scripts" / "smoke.py").write_text("pass\n", encoding="utf-8")
     (folder / "pyproject.toml").write_text('[project]\nname="mnist-logistic-optimization"\n', encoding="utf-8")
@@ -48,24 +53,30 @@ def git(root: Path, *args):
 
 def test_tuning_is_invariant_to_label_reversal():
     y = np.r_[np.full(300, -1), np.full(300, 1)]
-    train, val = train_validation_indices(y, seed=2025, fraction=.2)
-    reversed_train, reversed_val = train_validation_indices(-y, seed=2025, fraction=.2)
+    train, val = train_validation_indices(y, seed=2025, fraction=0.2)
+    reversed_train, reversed_val = train_validation_indices(-y, seed=2025, fraction=0.2)
     np.testing.assert_array_equal(train, reversed_train)
     np.testing.assert_array_equal(val, reversed_val)
     assert len(val) == 120
     assert not np.intersect1d(train, val).size
 
 
-@pytest.mark.parametrize("invalid_seed", [True, np.bool_(False), -1, .5, np.int64(9),
-                                           np.random.default_rng(10), np.random.SeedSequence(10)])
+@pytest.mark.parametrize(
+    "invalid_seed", [True, np.bool_(False), -1, 0.5, np.int64(9), np.random.default_rng(10), np.random.SeedSequence(10)]
+)
 def test_tuning_rejects_mutable_invalid_or_ambiguous_seed(invalid_seed):
     with pytest.raises(ValueError, match="seed"):
         train_validation_indices(np.array([-1, -1, 1, 1]), seed=invalid_seed)
 
 
-@pytest.mark.parametrize("labels", [np.array([-1+0j, -1+0j, 1+0j, 1+0j]),
-                                    np.array([-1, -1, 1, 1], dtype=object),
-                                    np.array([True, True, True, False])])
+@pytest.mark.parametrize(
+    "labels",
+    [
+        np.array([-1 + 0j, -1 + 0j, 1 + 0j, 1 + 0j]),
+        np.array([-1, -1, 1, 1], dtype=object),
+        np.array([True, True, True, False]),
+    ],
+)
 def test_tuning_rejects_nonreal_or_noncanonical_labels(labels):
     with pytest.raises(ValueError, match="labels"):
         train_validation_indices(labels, seed=42)
@@ -73,12 +84,12 @@ def test_tuning_rejects_nonreal_or_noncanonical_labels(labels):
 
 def test_list_pair_normalizes_to_tuple_for_both_protocols(fixture_mnist):
     for protocol in ("historical", "official"):
-        split = prepare_binary(*fixture_mnist, pair=[4, 9], protocol=protocol,
-                               train_per_class=3, test_per_class=2, seed=2024)
+        split = prepare_binary(
+            *fixture_mnist, pair=[4, 9], protocol=protocol, train_per_class=3, test_per_class=2, seed=2024
+        )
         assert split.digit_pair == (4, 9)
         assert type(split.digit_pair) is tuple
-        validate_split(split, Configuration(protocol=protocol, train_per_class=3,
-                                            test_per_class=2, iterations=1))
+        validate_split(split, Configuration(protocol=protocol, train_per_class=3, test_per_class=2, iterations=1))
 
 
 def test_longdouble_matrix_never_silently_rounds():
@@ -87,13 +98,13 @@ def test_longdouble_matrix_never_silently_rounds():
     precise = np.nextafter(np.longdouble(1), np.longdouble(2))
     with pytest.raises(ValueError, match="extended-precision"):
         real_matrix(np.array([[precise]], dtype=np.longdouble))
-    np.testing.assert_array_equal(real_matrix(np.array([[np.longdouble(1)]], dtype=np.longdouble)), [[1.]])
+    np.testing.assert_array_equal(real_matrix(np.array([[np.longdouble(1)]], dtype=np.longdouble)), [[1.0]])
 
 
 def test_longdouble_hash_is_padding_independent():
     if np.dtype(np.longdouble).itemsize <= 8:
         pytest.skip("long-double padding not used on this architecture")
-    original = np.array([np.longdouble(1.)])
+    original = np.array([np.longdouble(1.0)])
     altered = original.copy()
     # Change only padding, not any of the 80 significant x87 float bits.
     if np.dtype(np.longdouble).itemsize == 16 and np.little_endian:
@@ -211,10 +222,14 @@ def test_mnist_preflight_rejects_occupied_output_before_network(tmp_path, monkey
 
 def test_configured_ruff_b905_calls_are_explicit():
     import ast
-    for file in [*(ROOT / "src").rglob("*.py"), *(ROOT / "tests").rglob("*.py"),
-                 *(ROOT / "scripts").rglob("*.py")]:
+
+    for file in [*(ROOT / "src").rglob("*.py"), *(ROOT / "tests").rglob("*.py"), *(ROOT / "scripts").rglob("*.py")]:
         code = ast.parse(file.read_text(encoding="utf-8"), filename=str(file))
         for node in ast.walk(code):
-            if (isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "zip"
-                    and len(node.args) >= 2):
+            if (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Name)
+                and node.func.id == "zip"
+                and len(node.args) >= 2
+            ):
                 assert any(kw.arg == "strict" for kw in node.keywords), f"{file}:{node.lineno}"

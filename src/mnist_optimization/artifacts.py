@@ -105,17 +105,24 @@ def validate_inventory(folder: Path) -> bool:
         if marker.is_symlink() or not marker.is_file():
             return False
         report = json.loads(
-            marker.read_text(encoding="utf-8"), object_pairs_hook=_unique_json_object,
+            marker.read_text(encoding="utf-8"),
+            object_pairs_hook=_unique_json_object,
         )
-        if (not isinstance(report, dict)
-                or set(report) != {"schema_version", "status", "file_sha256", "directories"}
-                or type(report.get("schema_version")) is not int or report["schema_version"] != 2
-                or report.get("status") != "complete"):
+        if (
+            not isinstance(report, dict)
+            or set(report) != {"schema_version", "status", "file_sha256", "directories"}
+            or type(report.get("schema_version")) is not int
+            or report["schema_version"] != 2
+            or report.get("status") != "complete"
+        ):
             return False
         hashes = report.get("file_sha256")
         directories = report.get("directories")
-        if (not isinstance(hashes, dict) or not isinstance(directories, list)
-                or any(not isinstance(name, str) for name in hashes)):
+        if (
+            not isinstance(hashes, dict)
+            or not isinstance(directories, list)
+            or any(not isinstance(name, str) for name in hashes)
+        ):
             return False
         actual_files, actual_dirs = _tree_contents(folder)
         if set(actual_files) != set(hashes) or set(directories) != actual_dirs:
@@ -124,9 +131,12 @@ def validate_inventory(folder: Path) -> bool:
             return False
         for name, path in actual_files.items():
             digest = hashes[name]
-            if (not isinstance(digest, str) or len(digest) != 64
-                    or any(c not in "0123456789abcdef" for c in digest)
-                    or sha256_file(path) != digest):
+            if (
+                not isinstance(digest, str)
+                or len(digest) != 64
+                or any(c not in "0123456789abcdef" for c in digest)
+                or sha256_file(path) != digest
+            ):
                 return False
         return True
     except (OSError, ValueError, TypeError, UnicodeError, json.JSONDecodeError):

@@ -48,12 +48,9 @@ def test_regularization_excludes_intercept():
     X = np.array([[2.0, 1.0], [-1.0, 1.0]])
     y = np.array([1, -1])
     w = np.array([1.0, 3.0])
-    assert logistic_loss(w, X, y, l2=1.0, bias_index=1) == pytest.approx(
-        logistic_loss(w, X, y) + 0.5
-    )
+    assert logistic_loss(w, X, y, l2=1.0, bias_index=1) == pytest.approx(logistic_loss(w, X, y) + 0.5)
     np.testing.assert_allclose(
-        logistic_gradient(w, X, y, l2=1.0, bias_index=1)
-        - logistic_gradient(w, X, y), [1.0, 0.0]
+        logistic_gradient(w, X, y, l2=1.0, bias_index=1) - logistic_gradient(w, X, y), [1.0, 0.0]
     )
 
 
