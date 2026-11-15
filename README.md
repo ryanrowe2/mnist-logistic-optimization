@@ -1,5 +1,11 @@
 # MNIST Logistic Regression & Numerical Optimization
 
+**Mathematical question:** Can we derive and implement logistic regression and first-order optimization directly in NumPy, then verify the gradients and interpret results under documented evaluation protocols?
+
+**What to inspect first:** [Algorithms and mathematics](#algorithms-and-mathematics) explains the methods; [two evaluation protocols](#two-evaluation-protocols--never-pooled) separates historical results from later reproducible experiments.
+
+**Scope:** Reconstruction and extension of UC San Diego coursework, with the original report retained.
+
 **NumPy logistic regression, mathematical gradient verification, and reproducible first-order optimization.**  
 **Author:** Ryan Rowe · University of California, San Diego · B.S. Mathematics–Computer Science, 2025  
 **Provenance:** Reconstructed from UC San Diego MATH 173A coursework and the [July 18, 2024 report](docs/sources/2024-original-report.pdf).
