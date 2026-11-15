@@ -30,55 +30,6 @@ The engineering question is not simply whether logistic regression classifies di
 
 **Scientific integrity:** The 2024 result is a **historical reported result**, not a new benchmark. Synthetic fixtures validate execution but are **not** represented as MNIST classification observations. The repository intentionally ships no invented MNIST plots or replicated accuracies.
 
-## Publication-package integrity and updated empirical metrics
-
-The repository has a portable ZIP builder and an allowlist-enforcing verifier (v1.15.1):
-
-```bash
-python scripts/build_release.py --output ../mnist-logistic-optimization-release.zip
-python scripts/verify_release.py ../mnist-logistic-optimization-release.zip
-# Extract the ZIP, and run this from the extracted project directory:
-sha256sum -c MANIFEST.sha256
-```
-
-All manifest paths are **relative to the extracted project root**, not to the build computer.
-The release regression suite checks clean extraction, wheel and CLI execution, malicious self-consistent manifests, archive expansion limits, unexpected paths, and symlinks. The root `_SUCCESS.json` marker inventories **files and directories**; it is not an authentication signature for OpenML.
-Public `run_prepared` always labels its data `user_supplied_prepared_unverified` and never certifies
-historical or official source selection. Only the dataset-driven pipeline validates those selection protocols.
-
-Newly executed held-out evaluations report 95% Wilson intervals for overall accuracy and class recall.
-**The 2024 rounded 96% claim has no newly computed interval** because the original exact predictions
-were not retained and real MNIST could not be obtained here.
-
-For a platform-specific hash-locked reference environment, validate the complete wheelhouse and then perform a fresh isolated installation. Run on a network-connected
-Python 3.13/Linux machine:
-
-```bash
-python -m pip download --only-binary=:all: -d wheelhouse \
-  -r requirements-validation.txt 'ruff>=0.8,<1' wheel packaging
-python scripts/create_platform_lock.py --wheelhouse wheelhouse \
-  --output locks/reference-py313-linux-hashed.txt
-python -m pip install --no-index --find-links wheelhouse --require-hashes \
-  -r locks/reference-py313-linux-hashed.txt
-# In a fresh target environment, import the locked NumPy, Matplotlib,
-# scikit-learn, pytest, and Ruff distributions to verify installation.
-```
-
-This is a prepared **lock-generation and verification workflow**; no downloaded wheel hashes
-have been claimed as locally verified. GitHub CI provides a manual generation job after publication.
-
-For full real-MNIST verification (OpenML required), run:
-
-```bash
-python scripts/verify_real_mnist.py --output-root results/full_real_validation
-```
-
-This command executes both full historical and improved runs and saves validated evidence.
-The archive contains no newly claimed real-MNIST results; see
-[the latest remediation register](docs/release-status.md).
-
-**Current verification (v1.15.1):** 294 offline tests passed with 1 network test deselected; 86.06% combined coverage on Python 3.12. Final exact-ZIP evidence is documented separately. The accompanying certification report records the exact extracted-release results. See [release status](docs/release-status.md) for evidence and external gates. This release additionally requires a clean, tracked Git source tree for commit attribution; makes train-only validation independent of label sign; rejects lossy extended-precision inputs; and prevents staging/manifest symlink overwrites. The preceding release separates caller-provided source notes from enumerated unverified source labels, rejects duplicate JSON keys in completion manifests, and saves training predictions for independent metric checks. Ruff lint and formatting, the hosted Python matrix, genuine OpenML smoke, and the Python 3.13/Linux hash-locked installation have passed. Full reproduction outputs and immutable run evidence are tracked in [release status](docs/release-status.md).
-
 ## Algorithms and mathematics
 
 The binary labels are \(y_i \in \{-1,+1\}\), and the unregularized logistic objective is
@@ -198,6 +149,55 @@ The synthetic diagram is explicitly named as a mathematical smoke demonstration,
 **Software engineering:** A small installable Python package, input contracts, real CLI, tests, hosted CI, deterministic scientific JSON, transactional outputs, input hashes, and documented failure modes. **Data analysis:** Explicit dataset provenance, correct separation of evaluation observations, confusion matrices, per-class recall, and an honest treatment of performance uncertainty. **Applied mathematics:** Convexity, smoothness, finite differences, stability, and norm-dependent descent directions.
 
 **Acknowledgment:** The 2024 academic work is the basis for this reconstruction. Later code organization, numerical safeguards, tests, and evaluation protocol are modern portfolio revisions, not represented as original 2024 submissions. Dataset rights remain with the original MNIST rights holders. [Attribution](ATTRIBUTION.md).
+
+## Publication-package integrity and updated empirical metrics
+
+The repository has a portable ZIP builder and an allowlist-enforcing verifier (v1.15.1):
+
+```bash
+python scripts/build_release.py --output ../mnist-logistic-optimization-release.zip
+python scripts/verify_release.py ../mnist-logistic-optimization-release.zip
+# Extract the ZIP, and run this from the extracted project directory:
+sha256sum -c MANIFEST.sha256
+```
+
+All manifest paths are **relative to the extracted project root**, not to the build computer.
+The release regression suite checks clean extraction, wheel and CLI execution, malicious self-consistent manifests, archive expansion limits, unexpected paths, and symlinks. The root `_SUCCESS.json` marker inventories **files and directories**; it is not an authentication signature for OpenML.
+Public `run_prepared` always labels its data `user_supplied_prepared_unverified` and never certifies
+historical or official source selection. Only the dataset-driven pipeline validates those selection protocols.
+
+Newly executed held-out evaluations report 95% Wilson intervals for overall accuracy and class recall.
+**The 2024 rounded 96% claim has no newly computed interval** because the original exact predictions
+were not retained and real MNIST could not be obtained here.
+
+For a platform-specific hash-locked reference environment, validate the complete wheelhouse and then perform a fresh isolated installation. Run on a network-connected
+Python 3.13/Linux machine:
+
+```bash
+python -m pip download --only-binary=:all: -d wheelhouse \
+  -r requirements-validation.txt 'ruff>=0.8,<1' wheel packaging
+python scripts/create_platform_lock.py --wheelhouse wheelhouse \
+  --output locks/reference-py313-linux-hashed.txt
+python -m pip install --no-index --find-links wheelhouse --require-hashes \
+  -r locks/reference-py313-linux-hashed.txt
+# In a fresh target environment, import the locked NumPy, Matplotlib,
+# scikit-learn, pytest, and Ruff distributions to verify installation.
+```
+
+This is a prepared **lock-generation and verification workflow**; no downloaded wheel hashes
+have been claimed as locally verified. GitHub CI provides a manual generation job after publication.
+
+For full real-MNIST verification (OpenML required), run:
+
+```bash
+python scripts/verify_real_mnist.py --output-root results/full_real_validation
+```
+
+This command executes both full historical and improved runs and saves validated evidence.
+The archive contains no newly claimed real-MNIST results; see
+[the latest remediation register](docs/release-status.md).
+
+**Current verification (v1.15.1):** 294 offline tests passed with 1 network test deselected; 86.06% combined coverage on Python 3.12. Final exact-ZIP evidence is documented separately. The accompanying certification report records the exact extracted-release results. See [release status](docs/release-status.md) for evidence and external gates. This release additionally requires a clean, tracked Git source tree for commit attribution; makes train-only validation independent of label sign; rejects lossy extended-precision inputs; and prevents staging/manifest symlink overwrites. The preceding release separates caller-provided source notes from enumerated unverified source labels, rejects duplicate JSON keys in completion manifests, and saves training predictions for independent metric checks. Ruff lint and formatting, the hosted Python matrix, genuine OpenML smoke, and the Python 3.13/Linux hash-locked installation have passed. Full reproduction outputs and immutable run evidence are tracked in [release status](docs/release-status.md).
 
 ## Release verification and explicit limitations
 
